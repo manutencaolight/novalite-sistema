@@ -1,5 +1,5 @@
 # Em: core/models.py (Versão Corrigida e Unificada)
-
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 # 1. Importe o AbstractUser para herdar dele
 from django.contrib.auth.models import AbstractUser
