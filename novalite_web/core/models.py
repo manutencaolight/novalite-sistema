@@ -93,8 +93,28 @@ class Usuario(AbstractUser):
         verbose_name="Nível de Acesso"
     )
 
+    # ADICIONE ESTAS DUAS DEFINIÇÕES COMPLETAS ABAIXO:
+    groups = models.ManyToManyField(
+        Group,
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name="usuario_groups", # <--- Nome único para evitar conflito
+        related_query_name="user",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name="usuario_permissions", # <--- Nome único para evitar conflito
+        related_query_name="user",
+    )
 
+    def __str__(self):
+        return self.username
 # ... (outros modelos como Evento, MaterialEvento, etc. continuam aqui)
+
 class Evento(models.Model):
     STATUS_CHOICES = (
         ('PLANEJAMENTO', 'Em Planejamento'),
