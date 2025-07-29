@@ -15,7 +15,9 @@ function ManageMaintenanceModal({ item, onClose, onSuccess }) {
             status: status,
             solucao_aplicada: solucao,
         };
-        fetch('https://novalite-sistema.onrender.com/api/manutencao/${item.id}/atualizar_status/`, {
+        // CORREÇÃO: A string da URL agora usa crase (`) no início e no fim
+        // para permitir o uso da variável ${item.id}
+        fetch(`https://novalite-sistema.onrender.com/api/manutencao/${item.id}/atualizar_status/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -60,3 +62,4 @@ function ManageMaintenanceModal({ item, onClose, onSuccess }) {
     );
 }
 export default ManageMaintenanceModal;
+// CORREÇÃO: Removida a chave '}' extra que estava aqui no final

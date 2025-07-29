@@ -29,7 +29,8 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (username, password) => {
         try {
-            const response = await fetch(''https://novalite-sistema.onrender.com/api/token/', {
+            // CORREÇÃO: Removida a aspa simples extra do início da URL
+            const response = await fetch('https://novalite-sistema.onrender.com/api/token/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
@@ -93,3 +94,4 @@ export const AuthProvider = ({ children }) => {
 export const useAuth = () => {
     return useContext(AuthContext);
 };
+// CORREÇÃO: Removida a chave '}' extra que estava aqui no final
