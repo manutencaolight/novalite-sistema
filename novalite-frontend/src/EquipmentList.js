@@ -22,7 +22,7 @@ function EquipmentList() {
     const [error, setError] = useState(null);
 
     const fetchEquipamentos = useCallback(() => {
-        let url = 'http://127.0.0.1:8000/api/equipamentos/';
+        let url = 'https://novalite-sistema.onrender.com/api/equipamentos/';
         if (searchQuery) {
             url += `?search=${searchQuery}`;
         }

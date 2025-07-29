@@ -16,7 +16,7 @@ function MaterialSearch() {
 
         setLoading(true);
         const timerId = setTimeout(() => {
-            fetch(`http://127.0.0.1:8000/api/equipamentos/?search=${query}`)
+            fetch('https://novalite-sistema.onrender.com/api/equipamentos/?search=${query}`)
                 .then(res => res.json())
                 .then(data => {
                     setResults(data);

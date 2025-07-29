@@ -67,7 +67,7 @@ function DispatchModal({ evento, onClose, onDispatchSuccess }) {
             return alert("Nenhuma quantidade foi especificada para saída.");
         }
 
-        fetch(`http://127.0.0.1:8000/api/eventos/${evento.id}/dar_saida/`, {
+        fetch(`https://novalite-sistema.onrender.com/api/eventos/${evento.id}/dar_saida/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

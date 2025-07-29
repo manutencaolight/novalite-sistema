@@ -24,7 +24,7 @@ function EventList() {
     const [showNewOpModal, setShowNewOpModal] = useState(false);
 
     const fetchEventos = () => {
-        fetch('http://127.0.0.1:8000/api/eventos/')
+        fetch('https://novalite-sistema.onrender.com/api/eventos/')
             .then(res => res.json())
             .then(data => setEventos(data));
     };

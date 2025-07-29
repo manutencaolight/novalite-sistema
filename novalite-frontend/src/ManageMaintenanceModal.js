@@ -15,7 +15,7 @@ function ManageMaintenanceModal({ item, onClose, onSuccess }) {
             status: status,
             solucao_aplicada: solucao,
         };
-        fetch(`http://127.0.0.1:8000/api/manutencao/${item.id}/atualizar_status/`, {
+        fetch('https://novalite-sistema.onrender.com/api/manutencao/${item.id}/atualizar_status/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),

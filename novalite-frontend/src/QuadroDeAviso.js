@@ -27,17 +27,17 @@ function QuadroDeAviso() {
 
     useEffect(() => {
         // As suas chamadas fetch continuam as mesmas
-        fetch('http://127.0.0.1:8000/api/dashboard-stats/')
+        fetch('https://novalite-sistema.onrender.com/api/dashboard-stats/')
             .then(res => res.ok ? res.json() : Promise.reject('Falha ao carregar estatísticas.'))
             .then(data => setStats(data))
             .catch(err => setError("Não foi possível carregar os dados. Verifique o servidor."));
 
-        fetch('http://127.0.0.1:8000/api/eventos/')
+        fetch('https://novalite-sistema.onrender.com/api/eventos/')
             .then(res => res.ok ? res.json() : Promise.reject('Falha ao carregar eventos.'))
             .then(data => setEventosDoCalendario(data.results || data))
             .catch(err => console.error(err));
 
-        fetch('http://127.0.0.1:8000/api/relatorio-avarias/')
+        fetch('https://novalite-sistema.onrender.com/api/relatorio-avarias/')
             .then(res => res.ok ? res.json() : Promise.reject('Falha ao carregar avarias.'))
             .then(data => setAvariasRecentes(data))
             .catch(err => console.error(err));

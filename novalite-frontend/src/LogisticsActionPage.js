@@ -14,7 +14,7 @@ function LogisticsActionPage() {
     const navigate = useNavigate();
 
     const fetchData = () => {
-        fetch(`http://127.0.0.1:8000/api/eventos/${id}/`)
+        fetch('https://novalite-sistema.onrender.com/api/eventos/${id}/`)
             .then(res => res.ok ? res.json() : Promise.reject('Evento não encontrado'))
             .then(data => setEvento(data))
             .catch(error => alert(error.message));
@@ -24,7 +24,7 @@ function LogisticsActionPage() {
 
     const handleAction = (actionUrl, body, confirmationMessage) => {
         if (confirmationMessage && !window.confirm(confirmationMessage)) return;
-        fetch(`http://127.0.0.1:8000/api/eventos/${id}/${actionUrl}/`, {
+        fetch(`https://novalite-sistema.onrender.com/api/eventos/${id}/${actionUrl}/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -42,7 +42,7 @@ function LogisticsActionPage() {
     };
 
     const handleToggleConferencia = (materialId) => {
-        fetch(`http://127.0.0.1:8000/api/materiais/${materialId}/toggle_conferencia/`, { method: 'POST' })
+        fetch(`https://novalite-sistema.onrender.com/api/materiais/${materialId}/toggle_conferencia/`, { method: 'POST' })
         .then(res => { if(res.ok) fetchData(); });
     };
 
