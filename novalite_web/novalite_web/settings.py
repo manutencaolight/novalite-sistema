@@ -93,3 +93,15 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 AUTH_USER_MODEL = 'core.Usuario'
+
+# No final do arquivo settings.py
+
+# Aponta para a nossa nova pasta de arquivos estáticos
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Configurações do tema Jazzmin para usar o logo
+JAZZMIN_SETTINGS = {
+    "site_logo": "img/logo.png",
+}
