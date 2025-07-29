@@ -1,0 +1,136 @@
+/* Em: src/EventDetail.css */
+.management-section {
+    margin-top: 2rem;
+    border-top: 2px solid #eee;
+    padding-top: 1.5rem;
+}
+.action-buttons button {
+    margin-right: 10px;
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+.correction-note {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fa5341;
+    border: 1px solid #ffeeba;
+    border-radius: 5px;
+    color: #856404;
+}
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.styled-table th, .styled-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+.styled-table th {
+    background-color: #f8f9fa;
+}
+.conference-table tr.item-conferido {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+/* Em: src/EventDetail.css */
+
+.add-material-container {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+.add-material-form {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.search-wrapper {
+  position: relative;
+  flex-grow: 1;
+}
+.search-results-list {
+  position: absolute;
+  width: 100%;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 5px 5px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.search-results-list li {
+  padding: 10px;
+  cursor: pointer;
+}
+.search-results-list li:hover {
+  background-color: #f0f0f0;
+}
+
+/* Em: src/EventDetail.css (adicionar no final) */
+
+.add-material-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+}
+.add-material-container h4 {
+    margin-top: 0;
+}
+.add-material-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.filters-container {
+    display: flex;
+    gap: 1rem;
+}
+.filters-container select, .filters-container input {
+    flex: 1;
+}
+.selection-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+.selection-container select {
+    width: 100%;
+}
+.quantity-adder {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.quantity-adder input {
+    width: 70px;
+}
+
+/* Em: src/EventDetail.css (adicionar no final) */
+
+.conference-table .item-conferido {
+    background-color: #d4edda !important; /* Verde claro para itens conferidos */
+    color: #155724;
+}
+
+.conference-table input[type="checkbox"] {
+    transform: scale(1.5); /* Deixa o checkbox maior e mais fácil de clicar */
+    cursor: pointer;
+}
+
+.correction-note {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 5px;
+    color: #856404;
+}

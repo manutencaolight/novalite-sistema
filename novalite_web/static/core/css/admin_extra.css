@@ -1,0 +1,65 @@
+/* Em: static/css/admin_extra.css (Versão Completa e Final) */
+
+/* Estilo para o botão amarelo de imprimir na lista */
+.imprimir-button-lista {
+    background: #ff0000 !important;
+    border-color: #eea236 !important;
+    color: #fff !important;
+    font-weight: bold !important;
+    padding: 5px 10px !important;
+}
+.imprimir-button-lista:hover {
+    background: #ec971f !important;
+}
+
+/* Ajusta as colunas da tabela de materiais inline */
+.tabular .form-row .field-equipamento {
+    width: 15%;
+}
+.tabular .form-row .field-quantidade .vIntegerField,
+.tabular .form-row .field-quantidade_separada .vIntegerField {
+    width: 80px !important;
+    text-align: center;
+}
+
+/* Corrige a cor da fonte nos seletores do Jazzmin */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    color: #000000 !important;
+    background-color: #e4e4e4;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: #555 !important;
+}
+
+/* Transforma o link 'Adicionar outro' em um botão evidente */
+.add-another {
+    display: inline-block;
+    background-color: #28a745 !important;
+    color: white !important;
+    padding: 6px 12px;
+    margin-left: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    vertical-align: middle;
+    text-decoration: none;
+}
+.add-another:hover {
+    background-color: #218838 !important;
+    color: white !important;
+    text-decoration: none;
+}
+
+/* --- ESTILOS PARA DIMINUIR OS BOTÕES DE SALVAR --- */
+
+/* Alvo: a barra cinza no final dos formulários */
+.submit-row {
+    padding: 8px 15px !important;
+}
+
+/* Alvo: os botões de Salvar, Excluir, etc., dentro da barra */
+.submit-row input, .submit-row a.button {
+    padding: 6px 6px !important;
+    font-size: 0.85em !important;
+    margin-left: 4px !important;
+    height: auto !important;
+}

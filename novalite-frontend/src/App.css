@@ -1,0 +1,72 @@
+/* Em: src/App.css (Versão Final e Completa) */
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f4f6f9;
+  color: #1a202c;
+}
+
+.App { text-align: left; }
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #00358f;
+  padding: 1rem 2rem;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+}
+
+.header-logo img {
+  height: 80px; /* Tamanho do logo */
+  margin-right: 15px;
+}
+
+.header-logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+/* Em: src/App.css */
+
+/* ... (o resto do seu CSS) ... */
+
+nav a {
+  /* --- AJUSTES APLICADOS AQUI --- */
+  display: flex; /* Adicionado para alinhar ícone e texto */
+  align-items: center; /* Centraliza verticalmente */
+  
+  color: #cbd5e0;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 5px 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* ... (o resto do seu CSS) ... */
+
+nav a:hover { color: #ffffff; }
+
+nav a.active {
+  color: #ffffff;
+  border-bottom: 2px solid #3182ce; /* Linha azul para o item ativo */
+}
+
+.app-main-content {
+  padding: 2rem;
+}

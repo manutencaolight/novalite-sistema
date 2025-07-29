@@ -1,0 +1,14 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block submit_buttons_bottom %}
+    {# Renderiza os botões padrão de Salvar, etc. #}
+    {{ block.super }}
+
+    {# Adiciona nosso botão customizado, se o evento já existir #}
+    {% if original.pk %}
+        <div class="submit-row">
+            <a href="{% url 'evento_report_pdf' original.pk %}" target="_blank" class="button" style="background-color: #f0ad4e; border-color: #eea236;">Imprimir Relatório</a>
+        </div>
+    {% endif %}
+{% endblock %}

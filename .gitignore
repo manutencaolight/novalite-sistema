@@ -1,0 +1,16 @@
+# Arquivos do Python
+__pycache__/
+*.pyc
+
+# Ambiente Virtual
+venv/
+
+# Banco de Dados de Desenvolvimento
+db.sqlite3
+
+# Pasta de arquivos estáticos e de mídia (serão gerados no servidor)
+/staticfiles/
+/media/
+
+# Arquivos do sistema operacional
+.DS_Store

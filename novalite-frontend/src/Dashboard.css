@@ -1,0 +1,53 @@
+/* Em: src/components/Dashboard.css */
+
+.dashboard-grid {
+  display: flex;
+  gap: 2rem;
+}
+
+.main-panel {
+  flex: 3; /* Ocupa a maior parte do espaço */
+}
+
+.side-panel {
+  flex: 1; /* Ocupa o espaço restante */
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.calendar-container {
+  width: fit-content;
+  margin: 1rem 0;
+  border: 1px solid #dbdbdb;
+  border-radius: 10px;
+  padding: 1rem;
+  background-color: #fcfcfc;
+}
+
+.panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+}
+
+.panel h3 {
+  margin-top: 0;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.panel ul {
+  list-style: none;
+  padding: 0;
+}
+
+.panel li {
+  margin-bottom: 0.5rem;
+}
+
+/* Estilo para os dias marcados como evento */
+.rdp-day_event {
+  font-weight: bold;
+}
