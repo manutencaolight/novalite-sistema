@@ -34,7 +34,6 @@ ALLOWED_HOSTS.append('localhost')
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin', 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,9 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders', # <--- ADICIONE ESTA LINHA
     'core',  # <--- Altere 'orcamento' para 'core'
-    'import_export',  # <--- ADICIONE ESTA LINHA
-    'rest_framework',
-    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -133,9 +129,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField']
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # No final do arquivo settings.py
 CORS_ALLOWED_ORIGINS = [
-    "https://novalite-frontend.onrender.com",
+    "https://sistemanovalite.onrender.com",
 ]
