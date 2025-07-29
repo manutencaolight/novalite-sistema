@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders', # <--- ADICIONE ESTA LINHA
     'core',  # <--- Altere 'orcamento' para 'core'
     'import_export',  # <--- ADICIONE ESTA LINHA
     'rest_framework',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # <--- MUDANÇA: Adicionado Whitenoise
+    'corsheaders.middleware.CorsMiddleware', # <--- ADICIONE ESTA LINHA
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -131,4 +133,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField']
+
+# No final do arquivo settings.py
+CORS_ALLOWED_ORIGINS = [
+    "https://novalite-frontend.onrender.com",
+]
