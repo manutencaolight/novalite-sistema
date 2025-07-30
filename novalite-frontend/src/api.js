@@ -1,7 +1,7 @@
 // Em: src/api.js (Versão Final com Atualização de Token)
 
 import { jwtDecode } from 'jwt-decode';
-
+const API_BASE_URL = 'https://novalite-sistema.onrender.com';
 const baseURL = 'https://novalite-sistema.onrender.com';
 
 // Função para fazer o login (sem alterações)
