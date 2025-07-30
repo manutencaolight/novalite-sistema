@@ -1,5 +1,8 @@
 # Em: novalite_web/urls.py
+# TESTE DE SALVAMENTO 123
 
+from django.contrib import admin
+# ... resto do arquivo
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -21,7 +24,9 @@ router.register(r'eventos', views.EventoViewSet)
 router.register(r'materiais', views.MaterialEventoViewSet)
 router.register(r'manutencao', views.RegistroManutencaoViewSet)
 router.register(r'consumiveis', views.ConsumivelViewSet)
-router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
+router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)git add .
+git commit -m "Finaliza e valida a configuração de URLs"
+git push origin main
 
 
 
