@@ -11,7 +11,7 @@ function LogisticsDashboard() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        authFetch('/api/dashboard-stats/')
+        authFetch('/dashboard-stats/')
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar as operações.')))
             .then(data => {
                 // --- CORREÇÃO APLICADA AQUI ---
