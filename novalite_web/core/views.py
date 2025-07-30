@@ -41,24 +41,24 @@ from .serializers import (
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all().order_by('empresa')
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAdminUser] # <-- ALTERAÇÃO AQUI
+    permission_classes = [permissions.IsAuthenticated] # <-- ALTERAÇÃO AQUI
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all().order_by('nome')
     serializer_class = FuncionarioSerializer
-    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
+    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
 
 class VeiculoViewSet(viewsets.ModelViewSet):
     queryset = Veiculo.objects.all().order_by('nome')
     serializer_class = VeiculoSerializer
-    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
+    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
 
 
 
 class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
-    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
+    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
     filter_backends = [filters.SearchFilter]
     search_fields = ['modelo', 'fabricante']
 
