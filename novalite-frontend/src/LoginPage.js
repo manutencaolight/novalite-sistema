@@ -48,7 +48,7 @@ function LoginPage() {
     return (
         <Container component="main" maxWidth="xs" sx={{ mt: 8 }}>
             <Paper elevation={6} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <img src="/assets/novalite_logo.png" alt="Logotipo" style={{ width: '150px', marginBottom: '1rem' }} />
+                <img src="/novalite_logo.png" alt="Logotipo" style={{ width: '150px', marginBottom: '1rem' }} />
                 <Typography component="h1" variant="h5">
                     Acesso ao Sistema
                 </Typography>

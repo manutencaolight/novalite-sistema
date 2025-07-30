@@ -601,11 +601,13 @@ def evento_report_pdf(request, evento_id):
 
     doc = SimpleDocTemplate(response, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
     styles = getSampleStyleSheet()
+    
+    # --- CORREÇÃO: Bloco de código abaixo foi realinhado ---
     story = []
-
+    
     # 1. Cabeçalho com Logo
-        logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'novalite_logo.png')
-        logo_imagem = RLImage(logo_path, width=1.5*inch, height=0.75*inch) if os.path.exists(logo_path) else Paragraph("")
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'novalite_logo.png')
+    logo_imagem = RLImage(logo_path, width=1.5*inch, height=0.75*inch) if os.path.exists(logo_path) else Paragraph("")
     
     header_text = [
         Paragraph(main_title_text, styles['h1']),
@@ -672,8 +674,8 @@ def evento_report_pdf(request, evento_id):
         table = Table(data, colWidths=[5.5*inch, 1.5*inch], style=[('BACKGROUND', (0,0), (-1,0), colors.grey), ('TEXTCOLOR',(0,0),(-1,0),colors.whitesmoke), ('GRID', (0,0), (-1,-1), 1, colors.black), ('ALIGN', (1,1), (-1,-1), 'CENTER'), ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold')])
         story.append(table)
         story.append(Spacer(1, 0.25*inch))
-        consumiveis = evento.consumiveis_set.all()
     
+    consumiveis = evento.consumiveis_set.all()
     if consumiveis:
         story.append(Paragraph("<b>Lista de Consumíveis</b>", styles['h3']))
         data_consumiveis = [["Item", "Qtd.", "Unidade"]]
