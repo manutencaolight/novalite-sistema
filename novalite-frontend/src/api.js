@@ -2,7 +2,7 @@
 
 import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const baseURL = 'https://novalite-sistema.onrender.com';
 
 // Função para fazer o login (sem alterações)
 export const loginUser = async (username, password) => {
