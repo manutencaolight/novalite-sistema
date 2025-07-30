@@ -1,4 +1,4 @@
-// Em: src/EquipmentList.js (Versão Final e 100% Corrigida)
+// Em: src/EquipmentList.js (Versão Corrigida com authFetch)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -12,6 +12,8 @@ import AddIcon from '@mui/icons-material/Add';
 import BuildIcon from '@mui/icons-material/Build';
 import AddEquipmentForm from './AddEquipmentForm';
 import ReturnFromMaintenanceModal from './ReturnFromMaintenanceModal';
+// --- 1. IMPORTA A NOSSA FUNÇÃO DE FETCH AUTENTICADA ---
+import { authFetch } from './api';
 
 function EquipmentList() {
     const [equipamentos, setEquipamentos] = useState([]);
@@ -22,26 +24,21 @@ function EquipmentList() {
     const [error, setError] = useState(null);
 
     const fetchEquipamentos = useCallback(() => {
-        let url = 'https://novalite-sistema.onrender.com/api/equipamentos/';
+        let url = '/equipamentos/'; // Caminho relativo
         if (searchQuery) {
             url += `?search=${searchQuery}`;
         }
-
-        fetch(url)
+        
+        // --- 2. USA authFetch PARA BUSCAR A LISTA DE EQUIPAMENTOS ---
+        authFetch(url)
             .then(res => {
                 if (!res.ok) {
-                    throw new Error('Falha ao buscar dados. Verifique se o servidor Django está rodando.');
+                    throw new Error('Falha ao buscar dados dos equipamentos.');
                 }
                 return res.json();
             })
             .then(data => {
-                // --- CORREÇÃO APLICADA AQUI ---
-                // Garante que estamos lendo a lista de dentro de 'results'
-                if (data && Array.isArray(data.results)) {
-                    setEquipamentos(data.results);
-                } else if (Array.isArray(data)) {
-                    setEquipamentos(data); // Para o caso de a API não ser paginada
-                }
+                setEquipamentos(data.results || data);
             })
             .catch(err => {
                 setError(err.message);
@@ -52,18 +49,18 @@ function EquipmentList() {
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchEquipamentos();
-        }, 300); // Adiciona um pequeno atraso para não sobrecarregar a API ao digitar
+        }, 300);
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery, fetchEquipamentos]);
 
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
-        const url = isEditing ? `http://127.0.0.1:8000/api/equipamentos/${equipamentoId}/` : 'http://127.0.0.1:8000/api/equipamentos/';
+        const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
         const method = isEditing ? 'PUT' : 'POST';
 
-        fetch(url, {
+        // --- 3. USA authFetch PARA SALVAR (CRIAR/EDITAR) EQUIPAMENTOS ---
+        authFetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(equipamentoData),
         })
         .then(response => {
@@ -77,10 +74,14 @@ function EquipmentList() {
     
     const handleDelete = (id) => {
         if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
-            fetch(`http://127.0.0.1:8000/api/equipamentos/${id}/`, { method: 'DELETE' })
+            // --- 4. USA authFetch PARA DELETAR EQUIPAMENTOS ---
+            authFetch(`/equipamentos/${id}/`, { method: 'DELETE' })
               .then(response => {
-                  if (response.ok) fetchEquipamentos();
-                  else alert('Falha ao excluir.');
+                  if (response.ok) {
+                    fetchEquipamentos();
+                  } else {
+                    alert('Falha ao excluir.');
+                  }
               });
          }
     };
@@ -100,7 +101,7 @@ function EquipmentList() {
         setShowForm(!showForm);
     };
     
-    if (error) return <p style={{ color: 'red' }}>{error}</p>;
+    if (error) return <Typography color="error" sx={{m: 4}}>{`Erro ao carregar equipamentos: ${error}`}</Typography>;
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -134,6 +135,7 @@ function EquipmentList() {
             </Paper>
             
             <TableContainer component={Paper}>
+                {/* O restante do seu código para exibir a tabela continua igual */}
                 <Table>
                     <TableHead>
                         <TableRow>
