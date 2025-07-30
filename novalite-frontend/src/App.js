@@ -31,7 +31,7 @@ function AppLayout() {
         <div className="App">
             <header className="app-header">
                 <NavLink to="/" className="header-logo">
-                <img src={novalite_logo.png} alt="Logotipo novalite" />
+                <img src={meuLogo} alt="Logotipo" />
                     <h1>Sistema NOVALITE</h1>
                 </NavLink>
                 <nav>
