@@ -6,7 +6,7 @@ import { Routes, Route, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Button } from '@mui/material';
 import LoginPage from './LoginPage';
-import meuLogo from './logo.png'; // Ajuste o caminho se necessário
+import meuLogo from './novalite_logo.png';
 
 // Ícones
 import DashboardIcon from '@mui/icons-material/Dashboard';
