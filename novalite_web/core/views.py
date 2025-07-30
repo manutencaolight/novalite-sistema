@@ -1,4 +1,5 @@
 # Em: core/views.py (Versão Final, 100% Completa e Funcional)
+from rest_framework import viewsets, status, filters, permissions
 from django.shortcuts import render
 from datetime import datetime
 import os
@@ -40,7 +41,7 @@ from .serializers import (
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all().order_by('empresa')
     serializer_class = ClienteSerializer
-    permission_classes = [IsAuthenticated] # Protege a API
+    permission_classes = [permissions.IsAdminUser] # <-- ALTERAÇÃO AQUI
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all().order_by('nome')
