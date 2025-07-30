@@ -1,34 +1,43 @@
-// Em: src/api.js (Versão Final com Atualização de Token)
+// Em: src/api.js (Versão Corrigida e Simplificada)
 
 import { jwtDecode } from 'jwt-decode';
-const API_BASE_URL = 'https://novalite-sistema.onrender.com';
-const baseURL = 'https://novalite-sistema.onrender.com';
 
-// Função para fazer o login (sem alterações)
+// --- CORREÇÃO 1: Definimos uma única baseURL que já inclui o /api ---
+const baseURL = 'https://novalite-sistema.onrender.com/api';
+
+const getAuthTokens = () => {
+    const tokens = localStorage.getItem('authTokens');
+    return tokens ? JSON.parse(tokens) : null;
+};
+
+const setAuthTokens = (tokens) => {
+    localStorage.setItem('authTokens', JSON.stringify(tokens));
+};
+
 export const loginUser = async (username, password) => {
-    const response = await fetch(`${API_BASE_URL}/api/token/`, {
+    // A chamada agora usa a baseURL + o endpoint específico
+    const response = await fetch(`${baseURL}/token/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
     });
     const data = await response.json();
     if (response.ok) {
-        localStorage.setItem('authTokens', JSON.stringify(data));
+        setAuthTokens(data);
         return jwtDecode(data.access);
     } else {
         throw new Error(data.detail || 'Falha no login');
     }
 };
 
-// --- NOVA FUNÇÃO PARA ATUALIZAR O TOKEN ---
 const refreshToken = async () => {
-    const tokens = JSON.parse(localStorage.getItem('authTokens'));
+    const tokens = getAuthTokens();
     if (!tokens?.refresh) {
         return null;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
+        const response = await fetch(`${baseURL}/token/refresh/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh: tokens.refresh }),
@@ -36,61 +45,53 @@ const refreshToken = async () => {
 
         const data = await response.json();
         if (response.ok) {
-            // Salva os novos tokens e retorna o novo access token
-            localStorage.setItem('authTokens', JSON.stringify(data));
-            return data.access;
+            // Atualiza apenas o access token, mantendo o refresh token original
+            const newTokens = { ...tokens, access: data.access };
+            setAuthTokens(newTokens);
+            return newTokens.access;
         } else {
-            // Se a atualização falhar (ex: refresh token expirou), retorna null
+            localStorage.removeItem('authTokens');
+            window.location.href = '/login';
             return null;
         }
     } catch (error) {
+        localStorage.removeItem('authTokens');
+        window.location.href = '/login';
         return null;
     }
 };
 
-
-// --- FUNÇÃO authFetch ATUALIZADA ---
-// A "chave mestra" que adiciona o token e agora também tenta atualizá-lo
 export const authFetch = async (url, options = {}) => {
-    let tokens = JSON.parse(localStorage.getItem('authTokens'));
+    let tokens = getAuthTokens();
     
     if (!tokens) {
         window.location.href = '/login';
-        return Promise.reject("Token não encontrado");
+        return Promise.reject(new Error("Token não encontrado"));
     }
 
-    // Adiciona o token de acesso ao cabeçalho
+    const user = jwtDecode(tokens.access);
+    const isExpired = new Date(user.exp * 1000) < new Date();
+
+    if (isExpired) {
+        const newAccessToken = await refreshToken();
+        if (newAccessToken) {
+            tokens.access = newAccessToken;
+        } else {
+            return Promise.reject(new Error("Sessão expirada."));
+        }
+    }
+
     const headers = {
         ...options.headers,
         'Authorization': `Bearer ${tokens.access}`,
     };
-    // Garante que o Content-Type seja definido se houver um corpo, mas não para FormData
     if (options.body && !(options.body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
     }
 
-
-    let response = await fetch(`${API_BASE_URL}/api${url}`, { ...options, headers });
-
-    // Se a resposta for 401, tenta atualizar o token
-    if (response.status === 401) {
-        console.log("Token de acesso expirado. Tentando atualizar...");
-        
-        const newAccessToken = await refreshToken();
-
-        if (newAccessToken) {
-            console.log("Token atualizado com sucesso. Tentando a requisição novamente...");
-            // Tenta a requisição original novamente com o novo token
-            headers['Authorization'] = `Bearer ${newAccessToken}`;
-            response = await fetch(`${API_BASE_URL}/api${url}`, { ...options, headers });
-        } else {
-            // Se a atualização falhar, faz o logout
-            console.log("Falha ao atualizar o token. Fazendo logout.");
-            localStorage.removeItem('authTokens');
-            window.location.href = '/login';
-            return Promise.reject("Sessão completamente expirada.");
-        }
-    }
+    // --- CORREÇÃO 2: A URL final agora é montada de forma simples e correta ---
+    const finalUrl = `${baseURL}${url}`;
+    let response = await fetch(finalUrl, { ...options, headers });
 
     return response;
 };
