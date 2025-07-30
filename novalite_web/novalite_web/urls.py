@@ -41,6 +41,7 @@ urlpatterns = [
   
     # Endereços da API para funções específicas
     path('api/dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
+    path('api/equipamentos/categorias/', views.get_equipment_categories, name='equipment-categories'),
     path('api/relatorio-avarias/', views.relatorio_de_avarias_recentes, name='relatorio_avarias'),
 
     # Endereços para geração de Relatórios em PDF

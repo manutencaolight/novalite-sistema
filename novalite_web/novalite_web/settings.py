@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'core',
     'import_export',
-    'rest_framework',
+    'rest_framework',]
+    'django_filters', # <-- ADICIONE ESTA LINHA
     'rest_framework_simplejwt',
 ]
 
@@ -114,5 +115,8 @@ JAZZMIN_SETTINGS = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': ( # <-- ADICIONE ESTE BLOCO
+        'django_filters.rest_framework.DjangoFilterBackend',
     )
 }

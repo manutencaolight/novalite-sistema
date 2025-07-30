@@ -61,6 +61,8 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
     filter_backends = [filters.SearchFilter]
     search_fields = ['modelo', 'fabricante']
+    filterset_fields = ['categoria'] # <-- ADICIONE ESTA LINHA
+
 
     # --- CORREÇÃO 1: LÓGICA DE RETORNO DA MANUTENÇÃO ---
     @action(detail=True, methods=['post'])
@@ -949,3 +951,14 @@ def gerar_guia_reforco_pdf(request, evento_id):
 
 def home_view(request):
     return render(request, 'index.html')
+
+# No final do arquivo core/views.py
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_equipment_categories(request):
+    # Pega as opções de categoria diretamente do modelo Equipamento
+    categorias = Equipamento.CATEGORIAS
+    # Formata para uma lista de objetos que o frontend pode usar
+    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
+    return Response(formatted_categories)

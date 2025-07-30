@@ -1,10 +1,10 @@
-// Em: src/EquipmentList.js (Versão Corrigida com authFetch)
+// Em: src/EquipmentList.js (Versão com Filtro de Categoria)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Container, Typography, Box, Paper, Button,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton,
-    Collapse, Tooltip, TextField
+    Collapse, Tooltip, TextField, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -12,7 +12,6 @@ import AddIcon from '@mui/icons-material/Add';
 import BuildIcon from '@mui/icons-material/Build';
 import AddEquipmentForm from './AddEquipmentForm';
 import ReturnFromMaintenanceModal from './ReturnFromMaintenanceModal';
-// --- 1. IMPORTA A NOSSA FUNÇÃO DE FETCH AUTENTICADA ---
 import { authFetch } from './api';
 
 function EquipmentList() {
@@ -22,43 +21,51 @@ function EquipmentList() {
     const [itemToReturn, setItemToReturn] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [error, setError] = useState(null);
+    
+    // --- NOVO: Estados para o filtro de categoria ---
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('');
+
+    // --- NOVO: useEffect para buscar as categorias da API ---
+    useEffect(() => {
+        authFetch('/equipamentos/categorias/')
+            .then(res => res.json())
+            .then(data => setCategories(data))
+            .catch(err => console.error("Erro ao buscar categorias:", err));
+    }, []);
 
     const fetchEquipamentos = useCallback(() => {
-        let url = '/equipamentos/'; // Caminho relativo
+        // --- ATUALIZADO: Constrói a URL com múltiplos parâmetros de forma segura ---
+        const params = new URLSearchParams();
         if (searchQuery) {
-            url += `?search=${searchQuery}`;
+            params.append('search', searchQuery);
         }
+        if (selectedCategory) {
+            params.append('categoria', selectedCategory);
+        }
+        const url = `/equipamentos/?${params.toString()}`;
         
-        // --- 2. USA authFetch PARA BUSCAR A LISTA DE EQUIPAMENTOS ---
         authFetch(url)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Falha ao buscar dados dos equipamentos.');
-                }
-                return res.json();
-            })
-            .then(data => {
-                setEquipamentos(data.results || data);
-            })
+            .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao buscar dados dos equipamentos.')))
+            .then(data => setEquipamentos(data.results || data))
             .catch(err => {
                 setError(err.message);
                 console.error("Erro na busca:", err);
             });
-    }, [searchQuery]);
+    }, [searchQuery, selectedCategory]); // --- ATUALIZADO: Adiciona a categoria como dependência
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchEquipamentos();
         }, 300);
         return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery, fetchEquipamentos]);
+    }, [searchQuery, selectedCategory, fetchEquipamentos]); // --- ATUALIZADO: Adiciona a categoria
 
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
         const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
         const method = isEditing ? 'PUT' : 'POST';
 
-        // --- 3. USA authFetch PARA SALVAR (CRIAR/EDITAR) EQUIPAMENTOS ---
         authFetch(url, {
             method,
             body: JSON.stringify(equipamentoData),
@@ -74,7 +81,6 @@ function EquipmentList() {
     
     const handleDelete = (id) => {
         if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
-            // --- 4. USA authFetch PARA DELETAR EQUIPAMENTOS ---
             authFetch(`/equipamentos/${id}/`, { method: 'DELETE' })
               .then(response => {
                   if (response.ok) {
@@ -124,18 +130,35 @@ function EquipmentList() {
                 />
             </Collapse>
 
-            <Paper sx={{ p: 2, mb: 2, mt: 2 }}>
+            {/* --- ATUALIZADO: Barra de busca e filtro agora lado a lado --- */}
+            <Paper sx={{ p: 2, mb: 2, mt: 2, display: 'flex', gap: 2 }}>
                 <TextField
                     fullWidth
-                    label="Buscar Equipamento por Modelo ou Fabricante"
+                    label="Buscar por Modelo ou Fabricante"
                     variant="outlined"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {/* --- NOVO: Campo de Filtro por Categoria --- */}
+                <FormControl sx={{ minWidth: 250 }}>
+                    <InputLabel>Filtrar por Categoria</InputLabel>
+                    <Select
+                        value={selectedCategory}
+                        label="Filtrar por Categoria"
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        <MenuItem value="">
+                            <em>Todas as Categorias</em>
+                        </MenuItem>
+                        {categories.map((cat) => (
+                            <MenuItem key={cat.value} value={cat.value}>{cat.label}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </Paper>
             
             <TableContainer component={Paper}>
-                {/* O restante do seu código para exibir a tabela continua igual */}
+                {/* O restante da sua tabela de equipamentos permanece igual */}
                 <Table>
                     <TableHead>
                         <TableRow>
