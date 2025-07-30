@@ -27,6 +27,7 @@ router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
 
 # Lista de todos os endereços da aplicação
 urlpatterns = [
+    path('', views.home_view, name='home'), # <-- ADICIONE ESTA LINHA
     path('admin/', admin.site.urls),
     
     # --- URLS DO ROUTER REGISTRADAS SOB O PREFIXO 'api/' ---

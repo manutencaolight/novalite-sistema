@@ -1,5 +1,5 @@
 # Em: core/views.py (Versão Final, 100% Completa e Funcional)
-
+from django.shortcuts import render
 from datetime import datetime
 import os
 from django.db import models, transaction
@@ -945,4 +945,5 @@ def gerar_guia_reforco_pdf(request, evento_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)   
 
-
+def home_view(request):
+    return render(request, 'index.html')
