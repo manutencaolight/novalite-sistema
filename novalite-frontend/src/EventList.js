@@ -36,9 +36,9 @@ function EventList() {
             {showNewOpModal && <NewOperationModal onClose={() => setShowNewOpModal(false)} onCreated={fetchEventos} />}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h4" component="h1">Painel de Operações</Typography>
+                <Typography variant="h4" component="h1">Listas de Materiais</Typography>
                 <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowNewOpModal(true)}>
-                    Nova Operação
+                    Criar Nova Lista
                 </Button>
             </Box>
             
