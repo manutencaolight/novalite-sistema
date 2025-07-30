@@ -101,7 +101,10 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# Configurações do tema Jazzmin para usar o logo
 JAZZMIN_SETTINGS = {
+    # O logo que aparece no canto superior esquerdo após o login
     "site_logo": "img/logo.png",
+
+    # O logo que aparece na tela de login
+    "login_logo": "img/logo.png", 
 }
