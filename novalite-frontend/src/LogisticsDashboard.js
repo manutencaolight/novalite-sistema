@@ -1,24 +1,22 @@
-// Em: src/LogisticsDashboard.js (Versão com Cores Padronizadas)
+// Em: src/LogisticsDashboard.js (Versão Corrigida)
+
 import { authFetch } from './api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Typography, Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Chip, Button } from '@mui/material';
-
-// --- 1. IMPORTAÇÃO PADRONIZADA ADICIONADA ---
-// A função de cores agora vem do nosso arquivo central de utilidades.
 import { getStatusChipColor } from './utils/colorUtils';
-
-// A função local de cores que existia aqui foi REMOVIDA.
 
 function LogisticsDashboard() {
     const [operations, setOperations] = useState([]);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-    authFetch('/api/dashboard-stats/') // <-- CORREÇÃO APLICADA AQUI
+        authFetch('/api/dashboard-stats/')
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar as operações.')))
             .then(data => {
-                const relevantOperations = data.filter(op => 
+                // --- CORREÇÃO APLICADA AQUI ---
+                // O filtro agora é aplicado na lista 'proximos_eventos' que vem dentro do objeto 'data'
+                const relevantOperations = (data.proximos_eventos || []).filter(op => 
                     op.status !== 'PLANEJAMENTO' && 
                     !(op.status === 'FINALIZADO' && !op.tem_avarias)
                 );
@@ -58,10 +56,6 @@ function LogisticsDashboard() {
                                 <TableCell>{evento.cliente?.empresa}</TableCell>
                                 <TableCell>{new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}</TableCell>
                                 <TableCell align="center">
-                                    {/* Nenhuma mudança necessária aqui. 
-                                      Ele já usa a função getStatusChipColor, 
-                                      que agora é a versão padronizada que importamos.
-                                    */}
                                     <Chip label={evento.status_display} color={getStatusChipColor(evento.status)} size="small" />
                                 </TableCell>
                                 <TableCell align="right">
@@ -78,4 +72,5 @@ function LogisticsDashboard() {
         </Container>
     );
 }
+
 export default LogisticsDashboard;
