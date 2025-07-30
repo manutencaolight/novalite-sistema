@@ -1,5 +1,4 @@
 # Em: core/views.py (Versão Final, 100% Completa e Funcional)
-from rest_framework import viewsets, status, filters, permissions
 from django.shortcuts import render
 from datetime import datetime
 import os
@@ -7,6 +6,7 @@ from django.db import models, transaction
 from django.http import HttpResponse
 from django.conf import settings
 from django.utils import timezone
+from rest_framework import viewsets, status, filters, permissions # <-- permissions importado
 from django.db.models import Sum, F # <-- IMPORTAÇÃO CORRIGIDA AQUI
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import api_view, permission_classes
@@ -46,18 +46,19 @@ class ClienteViewSet(viewsets.ModelViewSet):
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all().order_by('nome')
     serializer_class = FuncionarioSerializer
-    permission_classes = [IsAuthenticated] # Protege a API
+    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
 
 class VeiculoViewSet(viewsets.ModelViewSet):
     queryset = Veiculo.objects.all().order_by('nome')
     serializer_class = VeiculoSerializer
-    permission_classes = [IsAuthenticated] # Protege a API
+    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
 
 
 
 class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
+    permission_classes = [permissions.IsAdminUser] # <-- CORREÇÃO APLICADA
     filter_backends = [filters.SearchFilter]
     search_fields = ['modelo', 'fabricante']
 
