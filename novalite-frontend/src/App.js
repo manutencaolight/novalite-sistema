@@ -6,6 +6,7 @@ import { Routes, Route, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { Button } from '@mui/material';
 import LoginPage from './LoginPage';
+import meuLogo from './logo.png'; // Ajuste o caminho se necessário
 
 // Ícones
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -30,7 +31,7 @@ function AppLayout() {
         <div className="App">
             <header className="app-header">
                 <NavLink to="/" className="header-logo">
-                    <img src="/assets/novalite_logo.png" alt="Logotipo Novalite" />
+                <img src={novalite_logo.png} alt="Logotipo novalite" />
                     <h1>Sistema NOVALITE</h1>
                 </NavLink>
                 <nav>
