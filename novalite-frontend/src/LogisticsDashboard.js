@@ -1,5 +1,5 @@
 // Em: src/LogisticsDashboard.js (Versão com Cores Padronizadas)
-
+import { authFetch } from './api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Typography, Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Chip, Button } from '@mui/material';
@@ -15,7 +15,7 @@ function LogisticsDashboard() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/api/eventos/')
+    authFetch('/api/dashboard-stats/') // <-- CORREÇÃO APLICADA AQUI
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar as operações.')))
             .then(data => {
                 const relevantOperations = data.filter(op => 
