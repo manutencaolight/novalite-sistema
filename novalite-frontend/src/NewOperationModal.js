@@ -1,15 +1,16 @@
-// Em: src/NewOperationModal.js (Versão Corrigida e Modificada)
+// Em: src/NewOperationModal.js (Versão Corrigida com Autenticação)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Dialog, DialogTitle, DialogContent, Box, Button, List, Paper,
     ListItemButton, ListItemText, TextField, DialogActions, Typography,
-    Select, MenuItem, FormControl, InputLabel, CircularProgress, FormHelperText
+    Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
+// --- 1. IMPORTA A FUNÇÃO authFetch ---
 import { authFetch } from './api';
 
-// --- Sub-componente para o formulário de "Criar Lista Nova" ---
+// O formulário de "Criar Lista Nova" agora vive aqui dentro.
 function NewListForm({ onSave, onCancel }) {
     const [nome, setNome] = useState('');
     const [clienteId, setClienteId] = useState('');
@@ -19,45 +20,21 @@ function NewListForm({ onSave, onCancel }) {
     const [dataEvento, setDataEvento] = useState('');
     const [dataTermino, setDataTermino] = useState('');
 
-    // --- MODIFICAÇÃO: Estados de loading e erro para a busca de clientes ---
-    const [loadingClientes, setLoadingClientes] = useState(true);
-    const [errorClientes, setErrorClientes] = useState(null);
-    const [submitError, setSubmitError] = useState(''); // Estado para erros de submissão
-
     useEffect(() => {
+        // --- 2. USA authFetch PARA BUSCAR OS CLIENTES ---
         authFetch('/clientes/')
-            .then(res => {
-                if (!res.ok) throw new Error('Falha ao carregar clientes.');
-                return res.json();
-            })
-            .then(data => {
-                setClientes(data.results || data);
-                setLoadingClientes(false);
-            })
-            .catch(err => {
-                setErrorClientes(err.message);
-                setLoadingClientes(false);
-            });
+            .then(res => res.json())
+            .then(data => setClientes(data.results || data));
     }, []);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setSubmitError(''); // Limpa erros anteriores
         const eventoData = {
-            nome,
-            local,
-            cliente: clienteId, // <-- CORREÇÃO: Alterado de 'cliente_id' para 'cliente'
-            tipo_evento: tipoEvento,
+            nome, local, cliente_id: clienteId, tipo_evento: tipoEvento,
             data_evento: dataEvento,
             data_termino: dataTermino || null,
         };
-
-        try {
-            await onSave(eventoData);
-        } catch (error) {
-            // --- MODIFICAÇÃO: Exibe o erro no formulário em vez de um alert ---
-            setSubmitError(error.message || "Ocorreu um erro desconhecido.");
-        }
+        onSave(eventoData);
     };
 
     return (
@@ -70,12 +47,9 @@ function NewListForm({ onSave, onCancel }) {
                     <MenuItem value="EMPRESTIMO">Empréstimo</MenuItem>
                 </Select>
             </FormControl>
-            <FormControl fullWidth required disabled={loadingClientes}>
+            <FormControl fullWidth required>
                 <InputLabel>Cliente/Empresa</InputLabel>
                 <Select value={clienteId} label="Cliente/Empresa" onChange={e => setClienteId(e.target.value)}>
-                    {/* --- MODIFICAÇÃO: Feedback de loading e erro --- */}
-                    {loadingClientes && <MenuItem disabled>Carregando clientes...</MenuItem>}
-                    {errorClientes && <MenuItem disabled sx={{ color: 'error.main' }}>{errorClientes}</MenuItem>}
                     {(clientes || []).map(c => <MenuItem key={c.id} value={c.id}>{c.empresa}</MenuItem>)}
                 </Select>
             </FormControl>
@@ -85,10 +59,6 @@ function NewListForm({ onSave, onCancel }) {
                 <TextField label="Data Início/Saída" type="date" value={dataEvento} onChange={e => setDataEvento(e.target.value)} InputLabelProps={{ shrink: true }} required fullWidth />
                 <TextField label="Data Término/Retorno" type="date" value={dataTermino} onChange={e => setDataTermino(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
             </Box>
-            
-            {/* --- MODIFICAÇÃO: Exibição de erro de submissão --- */}
-            {submitError && <Typography color="error" variant="body2">{submitError}</Typography>}
-
             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
                 <Button type="submit" variant="contained">Criar</Button>
                 <Button variant="outlined" onClick={onCancel}>Voltar</Button>
@@ -97,9 +67,8 @@ function NewListForm({ onSave, onCancel }) {
     );
 }
 
-// --- Componente Principal (com poucas alterações) ---
 function NewOperationModal({ onClose, onCreated }) {
-    const [view, setView] = useState('choice');
+    const [view, setView] = useState('choice'); // choice, new, clone
     const [eventos, setEventos] = useState([]);
     const [selectedEventToClone, setSelectedEventToClone] = useState(null);
     const [novoNome, setNovoNome] = useState('');
@@ -109,6 +78,7 @@ function NewOperationModal({ onClose, onCreated }) {
 
     useEffect(() => {
         if (view === 'clone') {
+            // --- 3. USA authFetch TAMBÉM AQUI ---
             authFetch('/eventos/')
                 .then(res => res.json())
                 .then(data => setEventos(data.results || data));
@@ -122,30 +92,47 @@ function NewOperationModal({ onClose, onCreated }) {
     }, [selectedEventToClone]);
 
     const handleClone = () => {
-        // Lógica de clonagem permanece a mesma
+        if (!selectedEventToClone || !novaDataInicio) {
+            alert('Selecione uma operação e preencha a nova data de início.');
+            return;
+        }
+        const payload = {
+            novo_nome: novoNome,
+            nova_data_evento: novaDataInicio,
+            nova_data_termino: novaDataTermino || null
+        };
+        // --- 4. USA authFetch PARA A AÇÃO DE CLONAR ---
+        authFetch(`/eventos/${selectedEventToClone.id}/clone/`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        })
+        .then(res => res.ok ? res.json() : Promise.reject('Falha ao duplicar.'))
+        .then(newEvento => {
+            alert(`Operação duplicada com sucesso!`);
+            onCreated();
+            navigate(`/eventos/${newEvento.id}`);
+        })
+        .catch(error => alert(`Erro: ${error.message}`));
     };
     
-    const handleSaveNew = async (eventoData) => {
-        try {
-            const novoEvento = await authFetch('/eventos/', {
-                method: 'POST',
-                body: JSON.stringify(eventoData),
-            }).then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)));
-            
-            alert('Operação criada com sucesso!'); // Mantido por simplicidade
+    const handleSaveNew = (eventoData) => {
+        // --- 5. USA authFetch PARA CRIAR A NOVA OPERAÇÃO ---
+        authFetch('/eventos/', {
+            method: 'POST',
+            body: JSON.stringify(eventoData),
+        }).then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
+        .then((novoEvento) => {
+            alert('Operação criada com sucesso!');
             onCreated();
             navigate(`/eventos/${novoEvento.id}`);
-        } catch (error) {
-            // O erro agora é propagado para o formulário
-            throw new Error(error.detail || "Falha ao criar operação.");
-        }
+        })
+        .catch(error => alert(`Erro: ${error.detail || "Falha ao criar operação."}`));
     };
 
     return (
         <Dialog open={true} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle>Criar Nova Operação</DialogTitle>
             <DialogContent>
-                {/* O restante do seu componente permanece praticamente o mesmo */}
                 {view === 'choice' && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, p: 4 }}>
                         <Button variant="contained" size="large" onClick={() => setView('new')}>Criar Lista Nova</Button>
@@ -155,7 +142,28 @@ function NewOperationModal({ onClose, onCreated }) {
                 {view === 'new' && (
                     <NewListForm onSave={handleSaveNew} onCancel={() => setView('choice')} />
                 )}
-                {/* A lógica de 'clone' permanece a mesma */}
+                {view === 'clone' && (
+                    <Box sx={{pt: 2}}>
+                        <Typography sx={{ mb: 1 }}>1. Selecione uma operação para duplicar:</Typography>
+                        <Paper sx={{ maxHeight: 200, overflow: 'auto', mb: 2, border: '1px solid #ddd' }}>
+                            <List>
+                                {(eventos || []).map(evento => (
+                                    <ListItemButton key={evento.id} selected={selectedEventToClone?.id === evento.id} onClick={() => setSelectedEventToClone(evento)}>
+                                        <ListItemText primary={evento.nome} secondary={new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')} />
+                                    </ListItemButton>
+                                ))}
+                            </List>
+                        </Paper>
+                        <Typography sx={{ mb: 2 }}>2. Edite as informações da nova operação:</Typography>
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
+                           <TextField label="Novo Nome/Descrição" value={novoNome} onChange={e => setNovoNome(e.target.value)} fullWidth />
+                           <Box sx={{ display: 'flex', gap: 2}}>
+                              <TextField label="Nova Data de Início/Saída" type="date" value={novaDataInicio} onChange={e => setNovaDataInicio(e.target.value)} InputLabelProps={{ shrink: true }} required fullWidth />
+                              <TextField label="Nova Data de Término/Retorno" type="date" value={novaDataTermino} onChange={e => setNovaDataTermino(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+                           </Box>
+                        </Box>
+                    </Box>
+                )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={view === 'choice' ? onClose : () => setView('choice')}>
@@ -166,5 +174,4 @@ function NewOperationModal({ onClose, onCreated }) {
         </Dialog>
     );
 }
-
 export default NewOperationModal;

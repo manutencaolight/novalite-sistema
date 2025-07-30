@@ -167,39 +167,16 @@ class RegistroManutencaoViewSet(viewsets.ModelViewSet):
     queryset = RegistroManutencao.objects.exclude(status='REPARADO').order_by('-data_entrada')
     serializer_class = RegistroManutencaoSerializer
 
-    @action(detail=True, methods=['post'])
-    def atualizar_status(self, request, pk=None):
-        registro = self.get_object()
-        novo_status = request.data.get('status')
-        solucao = request.data.get('solucao_aplicada', '')
-        
-        registro.status = novo_status
-        registro.solucao_aplicada = solucao
-        
-        if novo_status == 'REPARADO':
-            equipamento = registro.equipamento
-            if equipamento.quantidade_manutencao > 0:
-                equipamento.quantidade_manutencao -= 1
-                equipamento.quantidade_estoque += 1
-                equipamento.save()
-            registro.data_saida = timezone.now()
-        
-        registro.save()
-        return Response({'status': 'Status da manutenção atualizado!'})
-
+    # --- AJUSTE: MÉTODO DUPLICADO REMOVIDO, FICOU APENAS A VERSÃO COMPLETA ---
     @action(detail=True, methods=['post'])
     def atualizar_status(self, request, pk=None):
         try:
             registro = self.get_object()
             novo_status = request.data.get('status')
             solucao = request.data.get('solucao_aplicada', '')
-
-            if not novo_status:
-                return Response({'error': 'O novo status é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
-
+            if not novo_status: return Response({'error': 'O novo status é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
             registro.status = novo_status
             registro.solucao_aplicada = solucao
-            
             if novo_status == 'REPARADO':
                 equipamento = registro.equipamento
                 if equipamento.quantidade_manutencao > 0:
@@ -207,11 +184,9 @@ class RegistroManutencaoViewSet(viewsets.ModelViewSet):
                     equipamento.quantidade_estoque += 1
                     equipamento.save()
                 registro.data_saida = timezone.now()
-
             registro.save()
             return Response({'status': 'Status da manutenção atualizado com sucesso!'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e: return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class MaterialEventoViewSet(viewsets.ModelViewSet):
@@ -258,11 +233,6 @@ class FotoPreEventoViewSet(viewsets.ModelViewSet):
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all().order_by('-data_evento')
     serializer_class = EventoSerializer
-
-        # --- NOVA AÇÃO PARA CLONAR UMA OPERAÇÃO ---
-
-    # --- AÇÃO DE CLONAGEM CORRIGIDA E COMPLETA ---
-    # Em: core/views.py (dentro da classe EventoViewSet)
 
     @action(detail=True, methods=['post'])
     def clone(self, request, pk=None):
@@ -403,7 +373,6 @@ class EventoViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Saída de material registrada com sucesso!', 'novo_status': evento.get_status_display()})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
             
     @action(detail=True, methods=['post'], url_path='manage-team')
@@ -635,8 +604,8 @@ def evento_report_pdf(request, evento_id):
     story = []
 
     # 1. Cabeçalho com Logo
-    logo_path = os.path.join(settings.STATICFILES_DIRS[0], 'assets/novalite_logo.png')
-    logo_imagem = RLImage(logo_path, width=1.5*inch, height=0.75*inch) if os.path.exists(logo_path) else Paragraph("")
+        logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'novalite_logo.png')
+        logo_imagem = RLImage(logo_path, width=1.5*inch, height=0.75*inch) if os.path.exists(logo_path) else Paragraph("")
     
     header_text = [
         Paragraph(main_title_text, styles['h1']),
