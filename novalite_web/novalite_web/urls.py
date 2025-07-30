@@ -24,7 +24,7 @@ router.register(r'eventos', views.EventoViewSet)
 router.register(r'materiais', views.MaterialEventoViewSet)
 router.register(r'manutencao', views.RegistroManutencaoViewSet)
 router.register(r'consumiveis', views.ConsumivelViewSet)
-router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)git add .
+router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
 git commit -m "Finaliza e valida a configuração de URLs"
 git push origin main
 
