@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'core',
     'import_export',
-    'rest_framework',]
+    'rest_framework',
     'django_filters', # <-- ADICIONE ESTA LINHA
     'rest_framework_simplejwt',
 ]
