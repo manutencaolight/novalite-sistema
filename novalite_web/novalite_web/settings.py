@@ -108,3 +108,11 @@ JAZZMIN_SETTINGS = {
     # O logo que aparece na tela de login
     "login_logo": "img/logo.png", 
 }
+
+# No final do arquivo settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
