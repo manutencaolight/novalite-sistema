@@ -67,10 +67,8 @@ function ConferencePage() {
     };
 
     const handleGenerateDamageReport = () => {
-        const tokens = JSON.parse(localStorage.getItem('authTokens'));
-        fetch(`http://127.0.0.1:8000/reports/avarias/${id}/`, {
-            headers: { 'Authorization': `Bearer ${tokens.access}` }
-        })
+        // CORRIGIDO: Usa authFetch para garantir a autenticação
+        authFetch(`/reports/avarias/${id}/`)
         .then(response => {
             if (response.ok) return response.blob();
             if (response.status === 404) {

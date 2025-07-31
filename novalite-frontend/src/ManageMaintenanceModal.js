@@ -5,6 +5,7 @@ import {
     Dialog, DialogActions, DialogContent, DialogTitle, Button,
     TextField, Select, MenuItem, FormControl, InputLabel, Typography
 } from '@mui/material';
+import { authFetch } from './api'; // 1. Importa a função correta
 
 function ManageMaintenanceModal({ item, onClose, onSuccess }) {
     const [status, setStatus] = useState(item.status);
@@ -17,7 +18,7 @@ function ManageMaintenanceModal({ item, onClose, onSuccess }) {
         };
         // CORREÇÃO: A string da URL agora usa crase (`) no início e no fim
         // para permitir o uso da variável ${item.id}
-        fetch(`https://novalite-sistema.onrender.com/api/manutencao/${item.id}/atualizar_status/`, {
+        authFetch(`/manutencao/${item.id}/atualizar_status/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
