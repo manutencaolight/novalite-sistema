@@ -1,6 +1,5 @@
 # Em: novalite_web/urls.py
-# TESTE DE SALVAMENTO 123
-# FORÇANDO A ATUALIZAÇÃO FINAL
+# VERSÃO FINAL - 31/07
 from django.contrib import admin
 # ... resto do arquivo
 from django.contrib import admin
