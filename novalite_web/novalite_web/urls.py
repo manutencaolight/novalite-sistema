@@ -25,7 +25,6 @@ router.register(r'manutencao', views.RegistroManutencaoViewSet)
 router.register(r'consumiveis', views.ConsumivelViewSet)
 router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
 
-
 # Lista de todos os endereços da aplicação
 urlpatterns = [
     path('', views.home_view, name='home'), # <-- ADICIONE ESTA LINHA
