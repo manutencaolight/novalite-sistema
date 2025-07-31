@@ -566,7 +566,8 @@ class EventoViewSet(viewsets.ModelViewSet):
         evento.save()
 
         return Response({'status': 'Operação cancelada com sucesso!'})
- def home_view(request):
+
+def home_view(request):
     return render(request, 'index.html')
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -577,8 +578,8 @@ class MyTokenObtainPairView(TokenObtainPairView):
 def get_equipment_categories(request):
     categorias = Equipamento.CATEGORIAS
     formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
-    return Response(formatted_categories)   
-    
+    return Response(formatted_categories)
+
     # --- Views para Funções Específicas ---
 @api_view(['GET'])
 def dashboard_stats(request):
