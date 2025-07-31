@@ -16,6 +16,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
+from django_filters.rest_framework import DjangoFilterBackend # <-- 1. ADICIONE ESTA IMPORTAÇÃO
+
 
 # Imports do ReportLab
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
@@ -57,7 +59,8 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter, filters.DjangoFilterBackend]
+    # --- 2. USE OS NOMES CORRETOS AQUI ---
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend] 
     search_fields = ['modelo', 'fabricante']
     filterset_fields = ['categoria']
 
