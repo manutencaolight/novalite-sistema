@@ -42,18 +42,10 @@ function ReinforcementModal({ evento, onClose, onSuccess }) {
     };
 
     const generateReinforcementNote = (itemsParaGuia) => {
-        // CORRIGIDO: Usa authFetch e a URL relativa
+        // --- CORREÇÃO AQUI: Removido o bloco de código 'fetch' duplicado e incorreto ---
+        // Agora, usa apenas authFetch
         authFetch(`/reports/evento/${evento.id}/guia-reforco/`, {
             method: 'POST',
-            body: JSON.stringify({ itens: itemsParaGuia })
-        })
-
-        fetch(`http://127.0.0.1:8000/reports/evento/${evento.id}/guia-reforco/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${tokens.access}`
-            },
             body: JSON.stringify({ itens: itemsParaGuia })
         })
         .then(response => {
