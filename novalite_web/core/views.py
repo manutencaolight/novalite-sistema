@@ -41,25 +41,25 @@ from .serializers import (
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all().order_by('empresa')
     serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated] # <-- ALTERAÇÃO AQUI
+    permission_classes = [permissions.IsAuthenticated]
 
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.all().order_by('nome')
     serializer_class = FuncionarioSerializer
-    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
+    permission_classes = [permissions.IsAuthenticated]
 
 class VeiculoViewSet(viewsets.ModelViewSet):
     queryset = Veiculo.objects.all().order_by('nome')
     serializer_class = VeiculoSerializer
-    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
+    permission_classes = [permissions.IsAuthenticated]
 
 class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
-    permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
-    filter_backends = [filters.SearchFilter]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.DjangoFilterBackend]
     search_fields = ['modelo', 'fabricante']
-    filterset_fields = ['categoria'] # <-- ADICIONE ESTA LINHA
+    filterset_fields = ['categoria']
 
    
     # --- CORREÇÃO 1: LÓGICA DE RETORNO DA MANUTENÇÃO ---
@@ -235,6 +235,7 @@ class FotoPreEventoViewSet(viewsets.ModelViewSet):
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all().order_by('-data_evento')
     serializer_class = EventoSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
     def clone(self, request, pk=None):
@@ -565,6 +566,18 @@ class EventoViewSet(viewsets.ModelViewSet):
         evento.save()
 
         return Response({'status': 'Operação cancelada com sucesso!'})
+ def home_view(request):
+    return render(request, 'index.html')
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_equipment_categories(request):
+    categorias = Equipamento.CATEGORIAS
+    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
+    return Response(formatted_categories)   
     
     # --- Views para Funções Específicas ---
 @api_view(['GET'])
@@ -579,20 +592,6 @@ def dashboard_stats(request):
         'proximos_eventos': proximos_eventos_serializer.data
     }
     return Response(stats)
-
-def home_view(request):
-    return render(request, 'index.html')
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-# View para buscar a lista de categorias
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_equipment_categories(request):
-    categorias = Equipamento.CATEGORIAS
-    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
-    return Response(formatted_categories)
 
 def evento_report_pdf(request, evento_id):
     try:
