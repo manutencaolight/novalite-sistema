@@ -1,4 +1,4 @@
-// Em: src/EquipmentList.js (Versão Final com Melhoria de Feedback)
+// Em: src/EquipmentList.js (Versão com Correção do Loop Infinito)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -23,25 +23,15 @@ function EquipmentList() {
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
-    
-    // --- MODIFICAÇÃO: Estado de erro para o filtro de categoria ---
     const [categoryError, setCategoryError] = useState(null);
 
     useEffect(() => {
-        // --- MODIFICAÇÃO: Tratamento de erro aprimorado ---
         authFetch('/equipamentos/categorias/')
-            .then(res => {
-                if (!res.ok) throw new Error('Falha ao carregar categorias.');
-                return res.json();
-            })
+            .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
             .then(data => setCategories(data))
-            .catch(err => {
-                console.error("Erro ao buscar categorias:", err);
-                setCategoryError(err.message);
-            });
+            .catch(err => setCategoryError(err.message));
     }, []);
 
-    // O restante do seu código, que já estava correto, permanece o mesmo.
     const fetchEquipamentos = useCallback(() => {
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
@@ -61,7 +51,6 @@ function EquipmentList() {
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery, selectedCategory, fetchEquipamentos]);
 
-    // Funções handleSave, handleDelete, etc. permanecem as mesmas...
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
         const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
@@ -93,9 +82,21 @@ function EquipmentList() {
          }
     };
     
-    const handleEditClick = (equipamento) => setEditingItem(equipamento); setShowForm(true);
-    const handleCancelEdit = () => {setEditingItem(null); setShowForm(false);}
-    const handleAddNewClick = () => {setEditingItem(null); setShowForm(!showForm);}
+    // --- CORREÇÃO DA SINTAXE DAS FUNÇÕES ABAIXO ---
+    const handleEditClick = (equipamento) => {
+        setEditingItem(equipamento);
+        setShowForm(true);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingItem(null);
+        setShowForm(false);
+    };
+
+    const handleAddNewClick = () => {
+        setEditingItem(null);
+        setShowForm(!showForm);
+    };
 
     if (error) return <Typography color="error" sx={{m: 4}}>{`Erro ao carregar equipamentos: ${error}`}</Typography>;
 
@@ -119,15 +120,56 @@ function EquipmentList() {
                         <MenuItem value=""><em>Todas as Categorias</em></MenuItem>
                         {categories.map((cat) => (<MenuItem key={cat.value} value={cat.value}>{cat.label}</MenuItem>))}
                     </Select>
-                    {/* --- MODIFICAÇÃO: Exibe a mensagem de erro se a busca falhar --- */}
                     {categoryError && <Typography variant="caption" color="error" sx={{pl:2}}>{categoryError}</Typography>}
                 </FormControl>
             </Paper>
             
             <TableContainer component={Paper}>
-                {/* O restante da sua tabela de equipamentos permanece igual */}
+                 <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Modelo</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Fabricante</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Categoria</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Estoque</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Manutenção</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Ações</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {(equipamentos || []).map((eq) => (
+                            <TableRow key={eq.id} hover>
+                                <TableCell>{eq.modelo}</TableCell>
+                                <TableCell>{eq.fabricante}</TableCell>
+                                <TableCell>{eq.categoria}</TableCell>
+                                <TableCell>{eq.quantidade_estoque}</TableCell>
+                                <TableCell>{eq.quantidade_manutencao}</TableCell>
+                                <TableCell align="right">
+                                    {eq.quantidade_manutencao > 0 && (
+                                        <Tooltip title="Retornar da Manutenção">
+                                            <IconButton onClick={() => setItemToReturn(eq)} color="warning">
+                                                <BuildIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+                                    <Tooltip title="Editar Equipamento">
+                                        <IconButton onClick={() => handleEditClick(eq)} color="primary">
+                                            <EditIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Excluir Equipamento">
+                                        <IconButton onClick={() => handleDelete(eq.id)} color="error">
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </TableContainer>
         </Container>
     );
 }
+
 export default EquipmentList;
