@@ -134,6 +134,11 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
         return Response({'status': f'{quantidade} unidade(s) de {equipamento.modelo} enviada(s) para manutenção com sucesso!'})
 
 
+class ConsumivelViewSet(viewsets.ModelViewSet):
+    queryset = Consumivel.objects.all()
+    serializer_class = ConsumivelSerializer
+    permission_classes = [IsAuthenticated]
+
 class ConsumivelEventoViewSet(viewsets.ModelViewSet):
     queryset = ConsumivelEvento.objects.all()
     serializer_class = ConsumivelEventoSerializer
@@ -230,7 +235,10 @@ class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all().order_by('-data_evento')
     serializer_class = EventoSerializer
     permission_classes = [IsAuthenticated]
-
+    
+    def perform_create(self, serializer):
+        # Associa o usuário logado (request.user) ao campo 'criado_por'
+        serializer.save(criado_por=self.request.user)
     @action(detail=True, methods=['post'])
     def clone(self, request, pk=None):
         try:

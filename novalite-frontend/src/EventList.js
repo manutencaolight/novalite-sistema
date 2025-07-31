@@ -51,6 +51,7 @@ function EventList() {
                             <TableCell sx={{ fontWeight: 'bold' }}>Cliente</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Data</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Criado por</TableCell>
                             <TableCell align="right" sx={{ fontWeight: 'bold' }}>Ação</TableCell>
                         </TableRow>
                     </TableHead>
@@ -78,6 +79,7 @@ function EventList() {
                                 <TableCell align="center">
                                     <Chip label={evento.status_display} color={getStatusChipColor(evento.status)} size="small" />
                                 </TableCell>
+                                <TableCell>{evento.criado_por?.username || 'N/A'}</TableCell>
                                 <TableCell align="right">
                                     <Button component={Link} to={`/eventos/${evento.id}`} size="small">
                                         Gerenciar
