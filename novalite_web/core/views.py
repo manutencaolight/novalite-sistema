@@ -1,23 +1,21 @@
-# Em: core/views.py (Versão Final, 100% Completa e Funcional)
+# Em: core/views.py (Versão Final, Corrigida e Reorganizada)
+
 from django.shortcuts import render
 from datetime import datetime
 import os
-from django.db import models, transaction
+from django.db import transaction
 from django.http import HttpResponse
 from django.conf import settings
 from django.utils import timezone
-from rest_framework import viewsets, status, filters, permissions # <-- permissions importado
-from django.db.models import Sum, F # <-- IMPORTAÇÃO CORRIGIDA AQUI
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, permissions
+from django.db.models import Sum
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.decorators import action, api_view
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
-from django_filters.rest_framework import DjangoFilterBackend # <-- 1. ADICIONE ESTA IMPORTAÇÃO
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 # Imports do ReportLab
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
@@ -30,14 +28,95 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento # <-- Modelos adicionados aqui
+    Consumivel, ConsumivelEvento
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer, 
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer, 
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
-    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer # <-- Serializers adicionados aqui
+    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer
 )
+
+# ==============================================================================
+# ViewSets da API (Classes que gerenciam múltiplos endpoints)
+# ==============================================================================
+
+class ClienteViewSet(viewsets.ModelViewSet):
+    queryset = Cliente.objects.all().order_by('empresa')
+    serializer_class = ClienteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class FuncionarioViewSet(viewsets.ModelViewSet):
+    queryset = Funcionario.objects.all().order_by('nome')
+    serializer_class = FuncionarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class VeiculoViewSet(viewsets.ModelViewSet):
+    queryset = Veiculo.objects.all().order_by('nome')
+    serializer_class = VeiculoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class EquipamentoViewSet(viewsets.ModelViewSet):
+    queryset = Equipamento.objects.all()
+    serializer_class = EquipamentoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['modelo', 'fabricante']
+    filterset_fields = ['categoria']
+
+    @action(detail=True, methods=['post'])
+    def retornar_da_manutencao(self, request, pk=None):
+        # ... (seu código de retorno da manutenção aqui) ...
+        pass
+    
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def enviar_para_manutencao(self, request, pk=None):
+        # ... (seu código de envio para manutenção aqui) ...
+        pass
+
+class ConsumivelViewSet(viewsets.ModelViewSet):
+    queryset = Consumivel.objects.all()
+    serializer_class = ConsumivelSerializer
+    permission_classes = [IsAuthenticated]
+
+class RegistroManutencaoViewSet(viewsets.ModelViewSet):
+    queryset = RegistroManutencao.objects.exclude(status='REPARADO').order_by('-data_entrada')
+    serializer_class = RegistroManutencaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # ... (sua @action de atualizar_status entra aqui) ...
+
+class EventoViewSet(viewsets.ModelViewSet):
+    queryset = Evento.objects.all().order_by('-data_evento')
+    serializer_class = EventoSerializer
+    permission_classes = [IsAuthenticated]
+    # ... (todas as suas @actions como 'clone', 'mudar_status', etc. entram aqui DENTRO da classe) ...
+
+# ==============================================================================
+# Views de Função (Funções que gerenciam um único endpoint)
+# ==============================================================================
+
+def home_view(request):
+    return render(request, 'index.html')
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+# --- FUNÇÃO ESSENCIAL PARA O FILTRO DE CATEGORIAS ---
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_equipment_categories(request):
+    categorias = Equipamento.CATEGORIAS
+    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
+    return Response(formatted_categories)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_stats(request):
+    # ... (seu código do dashboard_stats aqui) ...
+    pass
+
+# ... (todas as suas views de PDF e outras @api_view entram aqui) ...
 
 # --- ViewSets para a API ---
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -59,12 +138,10 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
     permission_classes = [permissions.IsAuthenticated]
-    # --- 2. USE OS NOMES CORRETOS AQUI ---
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend] 
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['modelo', 'fabricante']
     filterset_fields = ['categoria']
 
-   
     # --- CORREÇÃO 1: LÓGICA DE RETORNO DA MANUTENÇÃO ---
     @action(detail=True, methods=['post'])
     def retornar_da_manutencao(self, request, pk=None):
@@ -171,6 +248,7 @@ class ConsumivelEventoViewSet(viewsets.ModelViewSet):
 class RegistroManutencaoViewSet(viewsets.ModelViewSet):
     queryset = RegistroManutencao.objects.exclude(status='REPARADO').order_by('-data_entrada')
     serializer_class = RegistroManutencaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     # --- AJUSTE: MÉTODO DUPLICADO REMOVIDO, FICOU APENAS A VERSÃO COMPLETA ---
     @action(detail=True, methods=['post'])
@@ -576,6 +654,7 @@ def home_view(request):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
+# --- FUNÇÃO ESSENCIAL PARA O FILTRO DE CATEGORIAS ---
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_equipment_categories(request):
@@ -583,8 +662,9 @@ def get_equipment_categories(request):
     formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
     return Response(formatted_categories)
 
-    # --- Views para Funções Específicas ---
+# --- Views para Funções Específicas ---
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def dashboard_stats(request):
     total_equip_estoque = Equipamento.objects.aggregate(total=Sum('quantidade_estoque'))['total'] or 0
     total_equip_manutencao = Equipamento.objects.aggregate(total=Sum('quantidade_manutencao'))['total'] or 0
