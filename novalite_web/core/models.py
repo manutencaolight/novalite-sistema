@@ -139,6 +139,14 @@ class Evento(models.Model):
     motivo_cancelamento = models.TextField(blank=True, null=True, verbose_name="Motivo do Cancelamento")
     equipe = models.ManyToManyField('Funcionario', blank=True, related_name="eventos")
     veiculos = models.ManyToManyField('Veiculo', blank=True, related_name="eventos")
+    criado_por = models.ForeignKey(
+        'Usuario', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name="Criado por",
+        related_name="operacoes_criadas"
+    )
     class Meta:
         verbose_name = "Operação"
         verbose_name_plural = "Operações (Eventos, Empréstimos, etc)"

@@ -134,11 +134,6 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
         return Response({'status': f'{quantidade} unidade(s) de {equipamento.modelo} enviada(s) para manutenção com sucesso!'})
 
 
-class ConsumivelViewSet(viewsets.ModelViewSet):
-    queryset = Consumivel.objects.all()
-    serializer_class = ConsumivelSerializer
-    permission_classes = [IsAuthenticated]
-
 class ConsumivelEventoViewSet(viewsets.ModelViewSet):
     queryset = ConsumivelEvento.objects.all()
     serializer_class = ConsumivelEventoSerializer
