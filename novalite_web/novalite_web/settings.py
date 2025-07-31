@@ -90,7 +90,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "https://sistemanovalite.onrender.com",    
+    "https://sistemanovalite.onrender.com", # Para o seu site no ar
+    "http://localhost:3000",             # Para o seu desenvolvimento local
 ]
 
 AUTH_USER_MODEL = 'core.Usuario'
