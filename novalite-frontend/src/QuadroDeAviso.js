@@ -1,5 +1,6 @@
 // Em: src/QuadroDeAviso.js (Versão com Cores de Status na Lista)
 
+import { authFetch } from './api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -32,7 +33,7 @@ function QuadroDeAviso() {
             .then(data => setStats(data))
             .catch(err => setError("Não foi possível carregar os dados. Verifique o servidor."));
 
-        fetch('https://novalite-sistema.onrender.com/api/eventos/')
+        authFetch('/eventos/') // <-- Correção aqui
             .then(res => res.ok ? res.json() : Promise.reject('Falha ao carregar eventos.'))
             .then(data => setEventosDoCalendario(data.results || data))
             .catch(err => console.error(err));
