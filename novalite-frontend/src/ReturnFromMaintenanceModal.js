@@ -5,6 +5,7 @@ import {
     Dialog, DialogActions, DialogContent, DialogTitle,
     Button, TextField, Typography
 } from '@mui/material';
+import { authFetch } from './api'; // USA AUTH FETCH
 
 function ReturnFromMaintenanceModal({ equipamento, onClose, onSuccess }) {
     const [quantidade, setQuantidade] = useState(equipamento.quantidade_manutencao);
@@ -15,9 +16,8 @@ function ReturnFromMaintenanceModal({ equipamento, onClose, onSuccess }) {
             return;
         }
 
-        fetch(`http://127.0.0.1:8000/api/equipamentos/${equipamento.id}/retornar_da_manutencao/`, {
+        authFetch(`/equipamentos/${equipamento.id}/retornar_da_manutencao/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ quantidade: quantidade }),
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))

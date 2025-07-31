@@ -6,6 +6,7 @@ import {
     TextField, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Typography
 } from '@mui/material';
+import { authFetch } from './api'; // USA AUTH FETCH
 
 function DispatchModal({ evento, onClose, onDispatchSuccess }) {
     const [itemsToDispatch, setItemsToDispatch] = useState([]);
@@ -32,9 +33,9 @@ function DispatchModal({ evento, onClose, onDispatchSuccess }) {
     };
 
     const generateDispatchNote = (dispatchedItems) => {
-        fetch(`http://127.0.0.1:8000/reports/guia-saida/${evento.id}/`, {
+        // CORRIGIDO: Usa authFetch e aponta para a URL relativa
+        authFetch(`/reports/guia-saida/${evento.id}/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ itens: dispatchedItems })
         })
         .then(response => {
@@ -67,9 +68,8 @@ function DispatchModal({ evento, onClose, onDispatchSuccess }) {
             return alert("Nenhuma quantidade foi especificada para saída.");
         }
 
-        fetch(`https://novalite-sistema.onrender.com/api/eventos/${evento.id}/dar_saida/`, {
+        authFetch(`/eventos/${evento.id}/dar_saida/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))

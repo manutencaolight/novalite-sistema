@@ -42,11 +42,11 @@ function ReinforcementModal({ evento, onClose, onSuccess }) {
     };
 
     const generateReinforcementNote = (itemsParaGuia) => {
-        const tokens = JSON.parse(localStorage.getItem('authTokens'));
-        if (!tokens) {
-            alert("Sessão expirada. Faça o login novamente.");
-            return;
-        }
+        // CORRIGIDO: Usa authFetch e a URL relativa
+        authFetch(`/reports/evento/${evento.id}/guia-reforco/`, {
+            method: 'POST',
+            body: JSON.stringify({ itens: itemsParaGuia })
+        })
 
         fetch(`http://127.0.0.1:8000/reports/evento/${evento.id}/guia-reforco/`, {
             method: 'POST',

@@ -11,20 +11,17 @@ function ClienteSelect({ value, onChange }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Busca a lista de clientes da sua API do backend
-    fetch('https://novalite-sistema.onrender.com/api/clientes/')
+    // CORRIGIDO: Usa authFetch e trata a resposta da API corretamente
+    authFetch('/clientes/')
       .then(response => {
-        if (!response.ok) {
-          throw new Error('Falha ao buscar clientes');
-        }
+        if (!response.ok) throw new Error('Falha ao buscar clientes');
         return response.json();
       })
       .then(data => {
-        setClientes(data); // Armazena a lista de clientes
+        setClientes(data.results || data); // Funciona com e sem paginação
         setLoading(false);
       })
       .catch(error => {
-        console.error("Erro buscando clientes:", error);
         setError(error.message);
         setLoading(false);
       });
