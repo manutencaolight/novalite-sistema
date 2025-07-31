@@ -1,5 +1,6 @@
 // Em: src/EventList.js (Versão com Alerta de Correção)
 
+import { authFetch } from './api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -24,7 +25,7 @@ function EventList() {
     const [showNewOpModal, setShowNewOpModal] = useState(false);
 
     const fetchEventos = () => {
-        fetch('https://novalite-sistema.onrender.com/api/eventos/')
+        authFetch('/eventos/') // <-- Correção aqui
             .then(res => res.json())
             .then(data => setEventos(data));
     };
