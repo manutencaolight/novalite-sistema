@@ -654,13 +654,13 @@ def home_view(request):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-# --- FUNÇÃO ESSENCIAL PARA O FILTRO DE CATEGORIAS ---
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_equipment_categories(request):
     categorias = Equipamento.CATEGORIAS
     formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
     return Response(formatted_categories)
+# --- FUNÇÃO ESSENCIAL PARA O FILTRO DE CATEGORIAS ---
 
 # --- Views para Funções Específicas ---
 @api_view(['GET'])
