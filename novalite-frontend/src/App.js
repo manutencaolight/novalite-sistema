@@ -1,5 +1,5 @@
 // Em: src/App.js (Versão Final com Nível de Acesso 'Manutenção')
-
+// VERSÃO FINAL E CORRIGIDA - 31/07
 import React from 'react';
 import './App.css';
 import { Routes, Route, NavLink, Navigate, Outlet } from 'react-router-dom';
