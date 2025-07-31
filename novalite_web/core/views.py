@@ -53,8 +53,6 @@ class VeiculoViewSet(viewsets.ModelViewSet):
     serializer_class = VeiculoSerializer
     permission_classes = [permissions.IsAuthenticated] # <-- CORREÇÃO APLICADA
 
-
-
 class EquipamentoViewSet(viewsets.ModelViewSet):
     queryset = Equipamento.objects.all()
     serializer_class = EquipamentoSerializer
@@ -63,6 +61,13 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
     search_fields = ['modelo', 'fabricante']
     filterset_fields = ['categoria'] # <-- ADICIONE ESTA LINHA
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_equipment_categories(request):
+    categorias = Equipamento.CATEGORIAS
+    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
+    return Response(formatted_categories)
 
     # --- CORREÇÃO 1: LÓGICA DE RETORNO DA MANUTENÇÃO ---
     @action(detail=True, methods=['post'])
