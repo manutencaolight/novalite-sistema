@@ -61,14 +61,7 @@ class EquipamentoViewSet(viewsets.ModelViewSet):
     search_fields = ['modelo', 'fabricante']
     filterset_fields = ['categoria'] # <-- ADICIONE ESTA LINHA
 
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_equipment_categories(request):
-    categorias = Equipamento.CATEGORIAS
-    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
-    return Response(formatted_categories)
-
+   
     # --- CORREÇÃO 1: LÓGICA DE RETORNO DA MANUTENÇÃO ---
     @action(detail=True, methods=['post'])
     def retornar_da_manutencao(self, request, pk=None):
@@ -587,6 +580,20 @@ def dashboard_stats(request):
     }
     return Response(stats)
 
+def home_view(request):
+    return render(request, 'index.html')
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+# View para buscar a lista de categorias
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_equipment_categories(request):
+    categorias = Equipamento.CATEGORIAS
+    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
+    return Response(formatted_categories)
+
 def evento_report_pdf(request, evento_id):
     try:
         evento = Evento.objects.get(id=evento_id)
@@ -899,10 +906,6 @@ def login_view(request):
     except Usuario.DoesNotExist:
         return Response({'error': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def gerar_guia_reforco_pdf(request, evento_id):
@@ -954,16 +957,4 @@ def gerar_guia_reforco_pdf(request, evento_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)   
 
-def home_view(request):
-    return render(request, 'index.html')
 
-# No final do arquivo core/views.py
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_equipment_categories(request):
-    # Pega as opções de categoria diretamente do modelo Equipamento
-    categorias = Equipamento.CATEGORIAS
-    # Formata para uma lista de objetos que o frontend pode usar
-    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
-    return Response(formatted_categories)
