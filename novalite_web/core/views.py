@@ -10,7 +10,7 @@ from django.utils import timezone
 from rest_framework import viewsets, status, filters, permissions
 from django.db.models import Sum
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -26,99 +26,17 @@ from reportlab.lib.units import inch
 
 # Importa todos os modelos e serializers necessários
 from .models import (
-    Cliente, Equipamento, Evento, Funcionario, Veiculo, 
+    Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
     Consumivel, ConsumivelEvento
 )
 from .serializers import (
-    ClienteSerializer, EquipamentoSerializer, EventoSerializer, 
-    FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer, 
+    ClienteSerializer, EquipamentoSerializer, EventoSerializer,
+    FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
     UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer
 )
 
-# ==============================================================================
-# ViewSets da API (Classes que gerenciam múltiplos endpoints)
-# ==============================================================================
-
-class ClienteViewSet(viewsets.ModelViewSet):
-    queryset = Cliente.objects.all().order_by('empresa')
-    serializer_class = ClienteSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class FuncionarioViewSet(viewsets.ModelViewSet):
-    queryset = Funcionario.objects.all().order_by('nome')
-    serializer_class = FuncionarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class VeiculoViewSet(viewsets.ModelViewSet):
-    queryset = Veiculo.objects.all().order_by('nome')
-    serializer_class = VeiculoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-class EquipamentoViewSet(viewsets.ModelViewSet):
-    queryset = Equipamento.objects.all()
-    serializer_class = EquipamentoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    search_fields = ['modelo', 'fabricante']
-    filterset_fields = ['categoria']
-
-    @action(detail=True, methods=['post'])
-    def retornar_da_manutencao(self, request, pk=None):
-        # ... (seu código de retorno da manutenção aqui) ...
-        pass
-    
-    @action(detail=True, methods=['post'])
-    @transaction.atomic
-    def enviar_para_manutencao(self, request, pk=None):
-        # ... (seu código de envio para manutenção aqui) ...
-        pass
-
-class ConsumivelViewSet(viewsets.ModelViewSet):
-    queryset = Consumivel.objects.all()
-    serializer_class = ConsumivelSerializer
-    permission_classes = [IsAuthenticated]
-
-class RegistroManutencaoViewSet(viewsets.ModelViewSet):
-    queryset = RegistroManutencao.objects.exclude(status='REPARADO').order_by('-data_entrada')
-    serializer_class = RegistroManutencaoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    # ... (sua @action de atualizar_status entra aqui) ...
-
-class EventoViewSet(viewsets.ModelViewSet):
-    queryset = Evento.objects.all().order_by('-data_evento')
-    serializer_class = EventoSerializer
-    permission_classes = [IsAuthenticated]
-    # ... (todas as suas @actions como 'clone', 'mudar_status', etc. entram aqui DENTRO da classe) ...
-
-# ==============================================================================
-# Views de Função (Funções que gerenciam um único endpoint)
-# ==============================================================================
-
-def home_view(request):
-    return render(request, 'index.html')
-
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
-# --- FUNÇÃO ESSENCIAL PARA O FILTRO DE CATEGORIAS ---
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_equipment_categories(request):
-    categorias = Equipamento.CATEGORIAS
-    formatted_categories = [{'value': cat[0], 'label': cat[1]} for cat in categorias]
-    return Response(formatted_categories)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def dashboard_stats(request):
-    # ... (seu código do dashboard_stats aqui) ...
-    pass
-
-# ... (todas as suas views de PDF e outras @api_view entram aqui) ...
-
-# --- ViewSets para a API ---
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all().order_by('empresa')
     serializer_class = ClienteSerializer
@@ -815,8 +733,8 @@ def evento_report_pdf(request, evento_id):
     doc.build(story)
     return response
 
-@api_view(['POST'])
-# Em: core/views.py (adicionar no final do arquivo)
+@api_view(['POST']) # Mude para POST se envia dados, ou GET se apenas busca
+@permission_classes([IsAuthenticated])
 def gerar_guia_saida_pdf(request, evento_id):
     try:
         evento = Evento.objects.get(id=evento_id)
@@ -989,7 +907,7 @@ def login_view(request):
     except Usuario.DoesNotExist:
         return Response({'error': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['POST'])
+@api_view(['POST']) # Mude para POST se envia dados, ou GET se apenas busca
 @permission_classes([IsAuthenticated])
 def gerar_guia_reforco_pdf(request, evento_id):
     try:
