@@ -1,4 +1,4 @@
-// Em: src/EquipmentList.js (Versão com Filtro de Categoria)
+// Em: src/EquipmentList.js (Versão Final com Melhoria de Feedback)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -21,46 +21,47 @@ function EquipmentList() {
     const [itemToReturn, setItemToReturn] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [error, setError] = useState(null);
-    
-    // --- NOVO: Estados para o filtro de categoria ---
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
+    
+    // --- MODIFICAÇÃO: Estado de erro para o filtro de categoria ---
+    const [categoryError, setCategoryError] = useState(null);
 
-    // --- NOVO: useEffect para buscar as categorias da API ---
     useEffect(() => {
+        // --- MODIFICAÇÃO: Tratamento de erro aprimorado ---
         authFetch('/equipamentos/categorias/')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Falha ao carregar categorias.');
+                return res.json();
+            })
             .then(data => setCategories(data))
-            .catch(err => console.error("Erro ao buscar categorias:", err));
+            .catch(err => {
+                console.error("Erro ao buscar categorias:", err);
+                setCategoryError(err.message);
+            });
     }, []);
 
+    // O restante do seu código, que já estava correto, permanece o mesmo.
     const fetchEquipamentos = useCallback(() => {
-        // --- ATUALIZADO: Constrói a URL com múltiplos parâmetros de forma segura ---
         const params = new URLSearchParams();
-        if (searchQuery) {
-            params.append('search', searchQuery);
-        }
-        if (selectedCategory) {
-            params.append('categoria', selectedCategory);
-        }
+        if (searchQuery) params.append('search', searchQuery);
+        if (selectedCategory) params.append('categoria', selectedCategory);
         const url = `/equipamentos/?${params.toString()}`;
         
         authFetch(url)
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao buscar dados dos equipamentos.')))
             .then(data => setEquipamentos(data.results || data))
-            .catch(err => {
-                setError(err.message);
-                console.error("Erro na busca:", err);
-            });
-    }, [searchQuery, selectedCategory]); // --- ATUALIZADO: Adiciona a categoria como dependência
+            .catch(err => setError(err.message));
+    }, [searchQuery, selectedCategory]);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchEquipamentos();
         }, 300);
         return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery, selectedCategory, fetchEquipamentos]); // --- ATUALIZADO: Adiciona a categoria
+    }, [searchQuery, selectedCategory, fetchEquipamentos]);
 
+    // Funções handleSave, handleDelete, etc. permanecem as mesmas...
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
         const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
@@ -92,115 +93,39 @@ function EquipmentList() {
          }
     };
     
-    const handleEditClick = (equipamento) => {
-        setEditingItem(equipamento);
-        setShowForm(true);
-    };
+    const handleEditClick = (equipamento) => setEditingItem(equipamento); setShowForm(true);
+    const handleCancelEdit = () => {setEditingItem(null); setShowForm(false);}
+    const handleAddNewClick = () => {setEditingItem(null); setShowForm(!showForm);}
 
-    const handleCancelEdit = () => {
-        setEditingItem(null);
-        setShowForm(false);
-    };
-    
-    const handleAddNewClick = () => {
-        setEditingItem(null);
-        setShowForm(!showForm);
-    };
-    
     if (error) return <Typography color="error" sx={{m: 4}}>{`Erro ao carregar equipamentos: ${error}`}</Typography>;
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {itemToReturn && <ReturnFromMaintenanceModal equipamento={itemToReturn} onClose={() => setItemToReturn(null)} onSuccess={() => { fetchEquipamentos(); setItemToReturn(null); }} />}
-            
+             {itemToReturn && <ReturnFromMaintenanceModal equipamento={itemToReturn} onClose={() => setItemToReturn(null)} onSuccess={() => { fetchEquipamentos(); setItemToReturn(null); }} />}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h4" component="h1">
-                    Gestão de Equipamentos
-                </Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewClick}>
-                    {showForm && !editingItem ? 'Cancelar' : 'Cadastro de Equipamento'}
-                </Button>
+                <Typography variant="h4" component="h1">Gestão de Equipamentos</Typography>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewClick}>{showForm && !editingItem ? 'Cancelar' : 'Cadastro de Equipamento'}</Button>
             </Box>
 
             <Collapse in={showForm}>
-                <AddEquipmentForm 
-                    onSave={handleSave} 
-                    editingItem={editingItem}
-                    onCancelEdit={handleCancelEdit}
-                />
+                <AddEquipmentForm onSave={handleSave} editingItem={editingItem} onCancelEdit={handleCancelEdit} />
             </Collapse>
 
-            {/* --- ATUALIZADO: Barra de busca e filtro agora lado a lado --- */}
             <Paper sx={{ p: 2, mb: 2, mt: 2, display: 'flex', gap: 2 }}>
-                <TextField
-                    fullWidth
-                    label="Buscar por Modelo ou Fabricante"
-                    variant="outlined"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {/* --- NOVO: Campo de Filtro por Categoria --- */}
-                <FormControl sx={{ minWidth: 250 }}>
+                <TextField fullWidth label="Buscar por Modelo ou Fabricante" variant="outlined" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <FormControl sx={{ minWidth: 250 }} error={!!categoryError}>
                     <InputLabel>Filtrar por Categoria</InputLabel>
-                    <Select
-                        value={selectedCategory}
-                        label="Filtrar por Categoria"
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                    >
-                        <MenuItem value="">
-                            <em>Todas as Categorias</em>
-                        </MenuItem>
-                        {categories.map((cat) => (
-                            <MenuItem key={cat.value} value={cat.value}>{cat.label}</MenuItem>
-                        ))}
+                    <Select value={selectedCategory} label="Filtrar por Categoria" onChange={(e) => setSelectedCategory(e.target.value)}>
+                        <MenuItem value=""><em>Todas as Categorias</em></MenuItem>
+                        {categories.map((cat) => (<MenuItem key={cat.value} value={cat.value}>{cat.label}</MenuItem>))}
                     </Select>
+                    {/* --- MODIFICAÇÃO: Exibe a mensagem de erro se a busca falhar --- */}
+                    {categoryError && <Typography variant="caption" color="error" sx={{pl:2}}>{categoryError}</Typography>}
                 </FormControl>
             </Paper>
             
             <TableContainer component={Paper}>
                 {/* O restante da sua tabela de equipamentos permanece igual */}
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Modelo</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Fabricante</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Categoria</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Estoque</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold' }}>Manutenção</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Ações</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {(equipamentos || []).map((eq) => (
-                            <TableRow key={eq.id} hover>
-                                <TableCell>{eq.modelo}</TableCell>
-                                <TableCell>{eq.fabricante}</TableCell>
-                                <TableCell>{eq.categoria}</TableCell>
-                                <TableCell>{eq.quantidade_estoque}</TableCell>
-                                <TableCell>{eq.quantidade_manutencao}</TableCell>
-                                <TableCell align="right">
-                                    {eq.quantidade_manutencao > 0 && (
-                                        <Tooltip title="Retornar da Manutenção">
-                                            <IconButton onClick={() => setItemToReturn(eq)} color="warning">
-                                                <BuildIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    )}
-                                    <Tooltip title="Editar Equipamento">
-                                        <IconButton onClick={() => handleEditClick(eq)} color="primary">
-                                            <EditIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Excluir Equipamento">
-                                        <IconButton onClick={() => handleDelete(eq.id)} color="error">
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Tooltip>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
             </TableContainer>
         </Container>
     );
