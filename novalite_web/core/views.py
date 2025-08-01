@@ -867,8 +867,8 @@ def gerar_guia_saida_pdf(request, evento_id):
 
         
 # Em: core/views.py
-
-@api_view(['GET'])
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def gerar_relatorio_avarias_pdf(request, evento_id):
     try:
         evento = Evento.objects.get(id=evento_id)
@@ -928,7 +928,8 @@ def gerar_relatorio_avarias_pdf(request, evento_id):
 # Em: core/views.py (adicionar no final do arquivo)
 
 # --- FUNÇÃO CORRIGIDA COM A IMPORTAÇÃO CERTA ---
-@api_view(['GET'])
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def relatorio_de_avarias_recentes(request):
     """
     Retorna uma lista dos últimos 10 itens que retornaram com avarias
@@ -962,7 +963,8 @@ def login_view(request):
     except Usuario.DoesNotExist:
         return Response({'error': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-@api_view(['POST']) # Mude para POST se envia dados, ou GET se apenas busca
+# --- ADICIONE OS DECORADORES AQUI ---
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def gerar_guia_reforco_pdf(request, evento_id):
     try:
