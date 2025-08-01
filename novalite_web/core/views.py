@@ -166,7 +166,7 @@ class ConsumivelEventoViewSet(viewsets.ModelViewSet):
 class RegistroManutencaoViewSet(viewsets.ModelViewSet):
     queryset = RegistroManutencao.objects.exclude(status='REPARADO').order_by('-data_entrada')
     serializer_class = RegistroManutencaoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]    
 
     # --- AJUSTE: MÉTODO DUPLICADO REMOVIDO, FICOU APENAS A VERSÃO COMPLETA ---
     @action(detail=True, methods=['post'])
@@ -189,6 +189,13 @@ class RegistroManutencaoViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Status da manutenção atualizado com sucesso!'})
         except Exception as e: return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class RegistroManutencaoHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Esta view mostra apenas os registros de manutenção concluídos (o histórico).
+    """
+    queryset = RegistroManutencao.objects.filter(status='REPARADO').order_by('-data_saida')
+    serializer_class = RegistroManutencaoSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class MaterialEventoViewSet(viewsets.ModelViewSet):
     queryset = MaterialEvento.objects.all()

@@ -1,60 +1,69 @@
-// Em: src/MaintenanceDashboard.js
+// Em: src/MaintenanceDashboard.js (Versão com Histórico)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Container, Typography, Box, Paper, Button,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    IconButton, Tooltip
+    IconButton, Tooltip, Divider
 } from '@mui/material';
 import BuildIcon from '@mui/icons-material/Build';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { authFetch } from './api';
 import ManageMaintenanceModal from './ManageMaintenanceModal';
-// --- 1. IMPORTE O NOVO MODAL ---
 import SendToMaintenanceModal from './SendToMaintenanceModal'; 
 
 function MaintenanceDashboard() {
     const [maintenanceItems, setMaintenanceItems] = useState([]);
+    // --- NOVO: Estado para o histórico ---
+    const [historyItems, setHistoryItems] = useState([]);
+    
     const [selectedItem, setSelectedItem] = useState(null);
-    // --- 2. ADICIONE O ESTADO PARA O NOVO MODAL ---
     const [isSendModalOpen, setSendModalOpen] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchMaintenanceItems = useCallback(() => {
-        authFetch('/manutencao/')
-            .then(res => res.ok ? res.json() : Promise.reject('Falha ao carregar itens.'))
-            .then(data => setMaintenanceItems(data.results || data))
-            .catch(err => setError(err.message));
+    const fetchData = useCallback(() => {
+        setError(null);
+        // --- ATUALIZADO: Busca os dois endpoints ao mesmo tempo ---
+        Promise.all([
+            authFetch('/manutencao/').then(res => res.json()),
+            authFetch('/manutencao-historico/').then(res => res.json())
+        ])
+        .then(([activeData, historyData]) => {
+            setMaintenanceItems(activeData.results || activeData);
+            setHistoryItems(historyData.results || historyData);
+        })
+        .catch(err => setError('Falha ao carregar dados da manutenção.'));
     }, []);
 
     useEffect(() => {
-        fetchMaintenanceItems();
-    }, [fetchMaintenanceItems]);
+        fetchData();
+    }, [fetchData]);
 
     const handleSuccess = () => {
         setSelectedItem(null);
-        setSendModalOpen(false); // Fecha o novo modal também
-        fetchMaintenanceItems();
+        setSendModalOpen(false);
+        fetchData(); // Recarrega ambos os dados
     };
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             {selectedItem && <ManageMaintenanceModal item={selectedItem} onClose={() => setSelectedItem(null)} onSuccess={handleSuccess} />}
-            {/* --- 3. ADICIONE O NOVO MODAL AO JSX --- */}
             {isSendModalOpen && <SendToMaintenanceModal onClose={() => setSendModalOpen(false)} onSuccess={handleSuccess} />}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" component="h1">
                     Painel de Manutenção
                 </Typography>
-                {/* --- 4. ADICIONE O NOVO BOTÃO --- */}
                 <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setSendModalOpen(true)}>
                     Enviar para Manutenção
                 </Button>
             </Box>
 
             {error && <Typography color="error">{error}</Typography>}
-            <TableContainer component={Paper}>
+
+            {/* Tabela de Itens Ativos */}
+            <Typography variant="h5" component="h2" gutterBottom>Itens em Reparo</Typography>
+            <TableContainer component={Paper} sx={{ mb: 4 }}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -83,6 +92,35 @@ function MaintenanceDashboard() {
                         ))}
                     </TableBody>
                 </Table>
+                 {maintenanceItems.length === 0 && <Typography sx={{p: 2, textAlign: 'center'}}>Nenhum item em manutenção.</Typography>}
+            </TableContainer>
+
+            <Divider sx={{ my: 4 }} />
+
+            {/* --- NOVO: Tabela de Histórico --- */}
+            <Typography variant="h5" component="h2" gutterBottom>Histórico de Reparos Concluídos</Typography>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Solução Aplicada</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Data de Entrada</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Data de Saída</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {(historyItems || []).map((item) => (
+                            <TableRow key={item.id} hover>
+                                <TableCell>{item.equipamento?.modelo}</TableCell>
+                                <TableCell>{item.solucao_aplicada || "N/A"}</TableCell>
+                                <TableCell>{new Date(item.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
+                                <TableCell>{item.data_saida ? new Date(item.data_saida).toLocaleDateString('pt-BR') : 'N/A'}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                {historyItems.length === 0 && <Typography sx={{p: 2, textAlign: 'center'}}>Nenhum reparo concluído ainda.</Typography>}
             </TableContainer>
         </Container>
     );
