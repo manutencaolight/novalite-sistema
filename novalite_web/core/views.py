@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import viewsets, status, filters, permissions
-from django.db.models import Sum
+from django.db.models import Sum, Q, Exists, OuterRef
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
@@ -641,12 +641,32 @@ def get_equipment_categories(request):
 def dashboard_stats(request):
     total_equip_estoque = Equipamento.objects.aggregate(total=Sum('quantidade_estoque'))['total'] or 0
     total_equip_manutencao = Equipamento.objects.aggregate(total=Sum('quantidade_manutencao'))['total'] or 0
-    proximos_eventos = Evento.objects.filter(data_evento__gte=datetime.now().date()).order_by('data_evento')[:5]
-    proximos_eventos_serializer = EventoSerializer(proximos_eventos, many=True)
+
+    # --- LÓGICA ATUALIZADA PARA O PAINEL DE LOGÍSTICA ---
+    # Subquery para verificar a existência de avarias para um evento
+    avarias_subquery = ItemRetornado.objects.filter(
+        material_evento__evento=OuterRef('pk')
+    ).exclude(condicao='OK')
+
+    # Query principal que busca:
+    # 1. Operações ativas (não em planejamento ou canceladas)
+    # 2. Operações finalizadas que TÊM avarias
+    eventos_para_logistica = Evento.objects.annotate(
+        tem_avarias=Exists(avarias_subquery)
+    ).filter(
+        ~Q(status__in=['PLANEJAMENTO', 'CANCELADO']), # Exclui planejamento e cancelados
+        Q(status__in=['AGUARDANDO_CONFERENCIA', 'AGUARDANDO_SAIDA', 'EM_ANDAMENTO']) |
+        (Q(status='FINALIZADO') & Q(tem_avarias=True))
+    ).distinct().order_by('data_evento')
+
+    # Serializa os dados para a resposta
+    eventos_serializer = EventoSerializer(eventos_para_logistica, many=True)
+
     stats = {
         'total_equipamentos': total_equip_estoque,
         'em_manutencao': total_equip_manutencao,
-        'proximos_eventos': proximos_eventos_serializer.data
+        # O frontend espera o campo 'proximos_eventos', então mantemos o nome
+        'proximos_eventos': eventos_serializer.data
     }
     return Response(stats)
 

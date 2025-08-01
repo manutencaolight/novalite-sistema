@@ -115,7 +115,8 @@ class EventoSerializer(serializers.ModelSerializer):
     consumiveis_set = ConsumivelEventoSerializer(many=True, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     criado_por = UsuarioSimpleSerializer(read_only=True)
-
+    tem_avarias = serializers.SerializerMethodField()
+    
     cliente_id = serializers.PrimaryKeyRelatedField(
         queryset=Cliente.objects.all(), source='cliente', write_only=True, required=True
     )
@@ -126,7 +127,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'cliente', 'cliente_id', 'responsavel_local_nome', 'responsavel_local_contato', 
             'data_montagem', 'data_evento', 'data_termino', 'modificado_em', 
             'observacao_correcao', 'motivo_cancelamento', 'equipe', 'veiculos', 
-            'materialevento_set', 'consumiveis_set', 'criado_por'
+            'materialevento_set', 'consumiveis_set', 'criado_por', 'tem_avarias'
         ]
 
     def get_tem_avarias(self, obj):
