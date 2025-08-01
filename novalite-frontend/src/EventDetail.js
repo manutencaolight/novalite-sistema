@@ -1,7 +1,7 @@
-// Em: src/EventDetail.js (Versão Final com Gestão de Consumíveis)
+// Em: src/EventDetail.js (Versão com Aditivos e Permissões)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // useNavigate para o aditivo
 import { 
     Container, Typography, Box, Paper, Button, Chip, Alert,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, 
@@ -12,12 +12,13 @@ import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import CancelIcon from '@mui/icons-material/Cancel';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'; // Ícone para aditivo
 import AddMaterialForm from './AddMaterialForm';
 import CancelOperationModal from './CancelOperationModal';
 import { getStatusChipColor } from './utils/colorUtils';
 import { useAuth } from './AuthContext';
 import { authFetch } from './api';
-import AddConsumableForm from './AddConsumableForm'; // <-- 1. IMPORTA O NOVO FORMULÁRIO
+import AddConsumableForm from './AddConsumableForm';
 
 function EventDetail() {
     const [evento, setEvento] = useState(null);
@@ -27,6 +28,7 @@ function EventDetail() {
     const [error, setError] = useState('');
     const { id } = useParams();
     const { user } = useAuth();
+    const navigate = useNavigate(); // --- NOVO: Para navegar para a página de aditivo ---
 
     const fetchData = useCallback(() => {
         authFetch(`/eventos/${id}/`)
@@ -37,6 +39,7 @@ function EventDetail() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
+    // O restante das suas funções handleAction, handleRemoveMaterial, etc. permanecem as mesmas
     const handleAction = (actionUrl, body = {}, confirmationMessage = '') => {
         if (confirmationMessage && !window.confirm(confirmationMessage)) return;
         authFetch(`/eventos/${id}/${actionUrl}/`, { method: 'POST', body: JSON.stringify(body) })
@@ -44,32 +47,26 @@ function EventDetail() {
             .then(data => { alert(data.status || 'Ação realizada!'); fetchData(); })
             .catch(error => alert(`Erro: ${error.error || 'Ocorreu um problema.'}`));
     };
-
     const handleRemoveMaterial = (materialId) => {
         if (window.confirm('Tem a certeza?')) {
             authFetch(`/materiais/${materialId}/`, { method: 'DELETE' })
             .then(response => { if (response.ok) fetchData(); });
         }
     };
-    
-    // --- 2. NOVA FUNÇÃO PARA REMOVER CONSUMÍVEIS ---
     const handleRemoveConsumable = (consumableEventId) => {
         if (window.confirm('Tem a certeza?')) {
             authFetch(`/consumiveis-evento/${consumableEventId}/`, { method: 'DELETE' })
             .then(response => { if (response.ok) fetchData(); });
         }
     };
-    
     const handleEditClick = (material) => {
         setEditingMaterialId(material.id);
         setEditingQuantity(material.quantidade);
     };
-
     const handleCancelEdit = () => {
         setEditingMaterialId(null);
         setEditingQuantity('');
     };
-
     const handleUpdateMaterial = (materialId) => {
         authFetch(`/materiais/${materialId}/`, {
             method: 'PATCH',
@@ -79,11 +76,17 @@ function EventDetail() {
             else { alert('Falha ao atualizar.'); }
         });
     };
+    // Fim das funções existentes
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!evento) return <p>Carregando...</p>;
 
+    // --- ATUALIZADO: Lógica de permissão para edição ---
     const isPlanning = evento.status === 'PLANEJAMENTO';
+    const isOwner = user && evento.criado_por && user.user_id === evento.criado_por.id;
+    const isAdmin = user && user.role === 'admin';
+    const podeEditar = (isOwner || isAdmin) && isPlanning;
+
     const canBeCancelled = ['PLANEJAMENTO', 'AGUARDANDO_CONFERENCIA', 'AGUARDANDO_SAIDA'].includes(evento.status);
 
     return (
@@ -94,22 +97,37 @@ function EventDetail() {
             
             <Paper sx={{ p: 3, mb: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h4">{evento.nome || "Operação Sem Nome"}</Typography>
-                    <Chip label={evento.status_display} color={getStatusChipColor(evento.status)} />
+                    <Box>
+                        <Typography variant="h4">{evento.nome || "Operação Sem Nome"}</Typography>
+                        <Chip label={evento.status_display} color={getStatusChipColor(evento.status)} />
+                    </Box>
+                    {/* --- NOVO: Botão para Criar Aditivo --- */}
+                    {evento.status === 'EM_ANDAMENTO' && podeEditar && (
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<AddCircleOutlineIcon />}
+                            onClick={() => alert('Funcionalidade de Aditivo a ser implementada.')} // Ação placeholder
+                        >
+                            Criar Aditivo
+                        </Button>
+                    )}
                 </Box>
-                <Typography variant="subtitle1" color="text.secondary">
+                <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
                     {evento.cliente?.empresa} - {new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}
+                </Typography>
+                {/* --- NOVO: Exibe quem criou a operação --- */}
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                    Criado por: {evento.criado_por?.username || 'Desconhecido'}
                 </Typography>
             </Paper>
 
-            {evento.status === 'CANCELADO' && <Alert severity="error" sx={{ mb: 3 }}><strong>Operação Cancelada:</strong> {evento.motivo_cancelamento}</Alert>}
-            {isPlanning && evento.observacao_correcao && <Alert severity="warning" sx={{ mb: 3 }}><strong>Retornado pela Logística:</strong> {evento.observacao_correcao}</Alert>}
-
-            {/* --- 3. LAYOUT ATUALIZADO PARA DUAS COLUNAS --- */}
+            {/* O resto do JSX continua o mesmo, mas usando a variável 'podeEditar' */}
+            
             <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
                     <Paper sx={{ p: 3, height: '100%' }}>
-                        <Typography variant="h6" gutterBottom>Gerir Equipamentos { !isPlanning && "(Lista Travada)" }</Typography>
+                        <Typography variant="h6" gutterBottom>Gerir Equipamentos { !podeEditar && "(Lista Travada)" }</Typography>
                         <TableContainer>
                             <Table size="small">
                                 <TableHead><TableRow><TableCell>Item</TableCell><TableCell>Qtd.</TableCell><TableCell align="right">Ações</TableCell></TableRow></TableHead>
@@ -119,51 +137,46 @@ function EventDetail() {
                                             <TableCell>{mat.equipamento?.modelo || mat.item_descricao}</TableCell>
                                             <TableCell>{editingMaterialId === mat.id ? (<TextField type="number" value={editingQuantity} onChange={(e) => setEditingQuantity(parseInt(e.target.value))} size="small" sx={{ width: '80px' }} />) : (mat.quantidade)}</TableCell>
                                             <TableCell align="right">
-                                                {isPlanning && (editingMaterialId === mat.id ? (<Tooltip title="Confirmar"><IconButton color="success" size="small" onClick={() => handleUpdateMaterial(mat.id)}><CheckIcon /></IconButton></Tooltip>) : (<Tooltip title="Editar"><IconButton color="primary" size="small" onClick={() => handleEditClick(mat)}><EditIcon /></IconButton></Tooltip>))}
-                                                {isPlanning && (editingMaterialId === mat.id ? (<Tooltip title="Cancelar"><IconButton size="small" onClick={handleCancelEdit}><CloseIcon /></IconButton></Tooltip>) : (<Tooltip title="Remover"><IconButton color="error" size="small" onClick={() => handleRemoveMaterial(mat.id)}><DeleteIcon /></IconButton></Tooltip>))}
+                                                {/* --- ATUALIZADO: Ações condicionais com base na permissão --- */}
+                                                {podeEditar && (editingMaterialId === mat.id ? (<Tooltip title="Confirmar"><IconButton color="success" size="small" onClick={() => handleUpdateMaterial(mat.id)}><CheckIcon /></IconButton></Tooltip>) : (<Tooltip title="Editar"><IconButton color="primary" size="small" onClick={() => handleEditClick(mat)}><EditIcon /></IconButton></Tooltip>))}
+                                                {podeEditar && (editingMaterialId === mat.id ? (<Tooltip title="Cancelar"><IconButton size="small" onClick={handleCancelEdit}><CloseIcon /></IconButton></Tooltip>) : (<Tooltip title="Remover"><IconButton color="error" size="small" onClick={() => handleRemoveMaterial(mat.id)}><DeleteIcon /></IconButton></Tooltip>))}
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                        {isPlanning && <AddMaterialForm eventoId={id} onMaterialAdded={fetchData} />}
+                        {podeEditar && <AddMaterialForm eventoId={id} onMaterialAdded={fetchData} />}
                     </Paper>
                 </Grid>
 
                 <Grid item xs={12} md={4}>
                     <Paper sx={{ p: 2, height: '100%' }}>
-                        <Typography variant="h6" gutterBottom>Gerir Consumíveis { !isPlanning && "(Travado)" }</Typography>
+                        <Typography variant="h6" gutterBottom>Gerir Consumíveis { !podeEditar && "(Travado)" }</Typography>
                         <TableContainer>
                             <Table size="small">
-                                <TableHead><TableRow><TableCell>Item</TableCell><TableCell>Qtd.</TableCell>{isPlanning && <TableCell align="right">Ações</TableCell>}</TableRow></TableHead>
+                                <TableHead><TableRow><TableCell>Item</TableCell><TableCell>Qtd.</TableCell>{podeEditar && <TableCell align="right">Ações</TableCell>}</TableRow></TableHead>
                                 <TableBody>
                                     {(evento.consumiveis_set || []).map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell>{item.consumivel.nome}</TableCell>
                                             <TableCell>{item.quantidade}</TableCell>
-                                            {isPlanning && (<TableCell align="right"><Tooltip title="Remover"><IconButton size="small" color="error" onClick={() => handleRemoveConsumable(item.id)}><DeleteIcon fontSize="small" /></IconButton></Tooltip></TableCell>)}
+                                            {podeEditar && (<TableCell align="right"><Tooltip title="Remover"><IconButton size="small" color="error" onClick={() => handleRemoveConsumable(item.id)}><DeleteIcon fontSize="small" /></IconButton></Tooltip></TableCell>)}
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                        {isPlanning && <AddConsumableForm 
-        eventoId={id} 
-        onConsumableAdded={fetchData} 
-        // --- ADICIONE ESTA NOVA PROP ---
-        existingConsumables={evento.consumiveis_set || []}
-    />
-}
+                        {podeEditar && <AddConsumableForm eventoId={id} onConsumableAdded={fetchData} existingConsumables={evento.consumiveis_set || []} />}
                     </Paper>
                 </Grid>
             </Grid>
-
+            
             <Paper sx={{ p: 3, mt: 8 }}>
                 <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {isPlanning && (<Button variant="contained" onClick={() => handleAction('enviar_para_conferencia', {}, 'Tem a certeza que deseja enviar para a conferência da Logística?')}>✔️ Enviar para Logística</Button>)}
-                    {user.role === 'admin' && canBeCancelled && (<Button variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => setCancelModalOpen(true)}>Cancelar Operação</Button>)}
+                    {isPlanning && podeEditar && (<Button variant="contained" onClick={() => handleAction('enviar_para_conferencia', {}, 'Tem a certeza que deseja enviar para a conferência da Logística?')}>✔️ Enviar para Logística</Button>)}
+                    {isAdmin && canBeCancelled && (<Button variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => setCancelModalOpen(true)}>Cancelar Operação</Button>)}
                 </Box>
             </Paper>
         </Container>

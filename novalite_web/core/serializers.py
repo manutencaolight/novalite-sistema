@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento
+    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -154,3 +154,27 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role
         return token
 
+class MaterialAditivoSerializer(serializers.ModelSerializer):
+    equipamento = EquipamentoSerializer(read_only=True)
+    equipamento_id = serializers.PrimaryKeyRelatedField(
+        queryset=Equipamento.objects.all(), source='equipamento', write_only=True
+    )
+    class Meta:
+        model = MaterialAditivo
+        fields = ['id', 'equipamento', 'equipamento_id', 'quantidade']
+
+class AditivoOperacaoSerializer(serializers.ModelSerializer):
+    materiais_aditivo = MaterialAditivoSerializer(many=True)
+    criado_por = UsuarioSimpleSerializer(read_only=True)
+
+    class Meta:
+        model = AditivoOperacao
+        fields = ['id', 'operacao_original', 'criado_por', 'data_criacao', 'descricao', 'materiais_aditivo']
+        read_only_fields = ['criado_por'] # O 'criado_por' será definido na view
+
+    def create(self, validated_data):
+        materiais_data = validated_data.pop('materiais_aditivo')
+        aditivo = AditivoOperacao.objects.create(**validated_data)
+        for material_data in materiais_data:
+            MaterialAditivo.objects.create(aditivo=aditivo, **material_data)
+        return aditivo

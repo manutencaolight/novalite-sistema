@@ -20,6 +20,7 @@ router.register(r'funcionarios', views.FuncionarioViewSet)
 router.register(r'veiculos', views.VeiculoViewSet)
 router.register(r'equipamentos', views.EquipamentoViewSet)
 router.register(r'eventos', views.EventoViewSet)
+router.register(r'aditivos', views.AditivoOperacaoViewSet) # <-- ADICIONE ESTA LINHA
 router.register(r'materiais', views.MaterialEventoViewSet)
 router.register(r'manutencao', views.RegistroManutencaoViewSet, basename='manutencao')
 router.register(r'manutencao-historico', views.RegistroManutencaoHistoryViewSet, basename='manutencao-historico')

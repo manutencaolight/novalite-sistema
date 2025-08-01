@@ -222,3 +222,26 @@ class RegistroManutencao(models.Model):
     data_saida = models.DateTimeField(null=True, blank=True)
     def __str__(self):
         return f"Manutenção para {self.equipamento.modelo} - {self.get_status_display()}"
+
+
+class AditivoOperacao(models.Model):
+    operacao_original = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="aditivos")
+    criado_por = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    descricao = models.TextField(verbose_name="Descrição do Aditivo")
+
+    class Meta:
+        verbose_name = "Aditivo de Operação"
+        verbose_name_plural = "Aditivos de Operações"
+        ordering = ['-data_criacao']
+
+    def __str__(self):
+        return f"Aditivo para {self.operacao_original.nome} em {self.data_criacao.strftime('%d/%m/%Y')}"
+
+class MaterialAditivo(models.Model):
+    aditivo = models.ForeignKey(AditivoOperacao, on_delete=models.CASCADE, related_name="materiais_aditivo")
+    equipamento = models.ForeignKey(Equipamento, on_delete=models.CASCADE)
+    quantidade = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.quantidade}x {self.equipamento.modelo}"    

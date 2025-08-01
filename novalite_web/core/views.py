@@ -28,13 +28,13 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento
+    Consumivel, ConsumivelEvento, AditivoOperacao
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer,
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
-    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer
+    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer
 )
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -246,6 +246,19 @@ class EventoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Associa o usuário logado (request.user) ao campo 'criado_por'
         serializer.save(criado_por=self.request.user)
+
+    def perform_update(self, serializer):
+        evento = self.get_object()
+        # Verifica se o usuário que está tentando editar é o mesmo que criou
+        if evento.criado_por != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Você não tem permissão para editar esta operação.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.criado_por != self.request.user and not self.request.user.is_staff:
+            raise PermissionDenied("Você não tem permissão para excluir esta operação.")
+        instance.delete()        
+        
     @action(detail=True, methods=['post'])
     def clone(self, request, pk=None):
         try:
@@ -575,7 +588,24 @@ class EventoViewSet(viewsets.ModelViewSet):
         evento.save()
 
         return Response({'status': 'Operação cancelada com sucesso!'})
+    
+class AditivoOperacaoViewSet(viewsets.ModelViewSet):
+    queryset = AditivoOperacao.objects.all()
+    serializer_class = AditivoOperacaoSerializer
+    permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        # Salva o usuário logado como o criador
+        serializer.save(criado_por=self.request.user)
+
+    def get_queryset(self):
+        # Permite filtrar aditivos por operação
+        queryset = super().get_queryset()
+        operacao_id = self.request.query_params.get('operacao_id')
+        if operacao_id:
+            queryset = queryset.filter(operacao_original_id=operacao_id)
+        return queryset
+    
 def home_view(request):
     return render(request, 'index.html')
 
