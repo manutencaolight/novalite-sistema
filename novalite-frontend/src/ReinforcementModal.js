@@ -42,8 +42,7 @@ function ReinforcementModal({ evento, onClose, onSuccess }) {
     };
 
     const generateReinforcementNote = (itemsParaGuia) => {
-        // --- CORREÇÃO AQUI: Removido o bloco de código 'fetch' duplicado e incorreto ---
-        // Agora, usa apenas authFetch
+        // CORRIGIDO: Usa authFetch para garantir a autenticação
         authFetch(`/reports/evento/${evento.id}/guia-reforco/`, {
             method: 'POST',
             body: JSON.stringify({ itens: itemsParaGuia })
