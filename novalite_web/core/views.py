@@ -17,6 +17,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
+
 # Imports do ReportLab
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
 from reportlab.lib.pagesizes import letter
@@ -594,17 +595,35 @@ class AditivoOperacaoViewSet(viewsets.ModelViewSet):
     serializer_class = AditivoOperacaoSerializer
     permission_classes = [IsAuthenticated]
 
+    # --- MÉTODO ATUALIZADO COM A LÓGICA DE INTEGRAÇÃO ---
+    @transaction.atomic # Garante que todas as operações sejam bem-sucedidas ou nenhuma
     def perform_create(self, serializer):
-        # Salva o usuário logado como o criador
-        serializer.save(criado_por=self.request.user)
+        # 1. Salva o aditivo e associa o usuário logado
+        aditivo = serializer.save(criado_por=self.request.user)
+        
+        # 2. Pega a operação original (o evento)
+        operacao_original = aditivo.operacao_original
 
-    def get_queryset(self):
-        # Permite filtrar aditivos por operação
-        queryset = super().get_queryset()
-        operacao_id = self.request.query_params.get('operacao_id')
-        if operacao_id:
-            queryset = queryset.filter(operacao_original_id=operacao_id)
-        return queryset
+        # 3. Itera sobre os materiais do aditivo que acabaram de ser criados
+        for material_aditivo in aditivo.materiais_aditivo.all():
+            equipamento = material_aditivo.equipamento
+            quantidade_adicionada = material_aditivo.quantidade
+
+            # Verifica se este equipamento já existe na lista de materiais da operação original
+            material_existente, created = MaterialEvento.objects.get_or_create(
+                evento=operacao_original,
+                equipamento=equipamento,
+                defaults={'quantidade': 0} # Valor padrão se for um item novo
+            )
+
+            # Adiciona a nova quantidade à quantidade planejada
+            material_existente.quantidade += quantidade_adicionada
+            material_existente.save()
+
+            # --- ALERTA PARA A LOGÍSTICA (Opcional, mas recomendado) ---
+            # Podemos criar um campo de notificação no modelo Evento no futuro
+            # Por enquanto, a simples adição do item já o fará aparecer na conferência.
+
     
 def home_view(request):
     return render(request, 'index.html')
