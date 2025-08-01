@@ -185,10 +185,30 @@ function EventDetail() {
             </Grid>
             
             <Paper sx={{ p: 3, mt: 8 }}>
-                {/* ... (Ações da Operação, sem alterações) ... */}
+                <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
+                <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    {/* Este botão só aparece se a operação estiver "Em Planejamento" e o usuário tiver permissão */}
+                    {isPlanning && podeEditar && (
+                        <Button variant="contained" onClick={() => handleAction('enviar_para_conferencia', {}, 'Tem a certeza que deseja enviar para a conferência da Logística?')}>
+                            ✔️ Enviar para Logística
+                        </Button>
+                    )}
+                    {/* Este botão só aparece para admins e se o status permitir cancelamento */}
+                    {isAdmin && canBeCancelled && (
+                        <Button variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => setCancelModalOpen(true)}>
+                            Cancelar Operação
+                        </Button>
+                    )}
+                    {/* Mensagem caso nenhuma ação esteja disponível */}
+                    {!((isPlanning && podeEditar) || (isAdmin && canBeCancelled)) && (
+                        <Typography variant="body2" color="text.secondary">Nenhuma ação principal disponível para o status atual.</Typography>
+                    )}
+                </Box>
             </Paper>
         </Container>
     );
 }
+
+export default EventDetail;
 
 export default EventDetail;
