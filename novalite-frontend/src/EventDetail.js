@@ -96,8 +96,25 @@ function EventDetail() {
 
             <Button component={Link} to="/eventos" sx={{ mb: 2 }}>← Voltar para a Lista</Button>
             
+            {/* --- SEÇÃO DO CABEÇALHO --- */}
             <Paper sx={{ p: 3, mb: 3 }}>
-                {/* ... (cabeçalho da operação, sem alterações) ... */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box>
+                        <Typography variant="h4">{evento.nome || "Operação Sem Nome"}</Typography>
+                        <Chip label={evento.status_display} color={getStatusChipColor(evento.status)} />
+                    </Box>
+                    {podeCriarAditivo && (
+                        <Button variant="outlined" color="secondary" startIcon={<AddCircleOutlineIcon />} onClick={() => setAditivoModalOpen(true)}>
+                            Criar Aditivo
+                        </Button>
+                    )}
+                </Box>
+                <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+                    {evento.cliente?.empresa} - {new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                    Criado por: {evento.criado_por?.username || 'Desconhecido'}
+                </Typography>
             </Paper>
             
             <Grid container spacing={3}>
@@ -184,22 +201,20 @@ function EventDetail() {
                 </Grid>
             </Grid>
             
+            {/* --- SEÇÃO DOS BOTÕES DE AÇÃO --- */}
             <Paper sx={{ p: 3, mt: 8 }}>
                 <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    {/* Este botão só aparece se a operação estiver "Em Planejamento" e o usuário tiver permissão */}
                     {isPlanning && podeEditar && (
                         <Button variant="contained" onClick={() => handleAction('enviar_para_conferencia', {}, 'Tem a certeza que deseja enviar para a conferência da Logística?')}>
                             ✔️ Enviar para Logística
                         </Button>
                     )}
-                    {/* Este botão só aparece para admins e se o status permitir cancelamento */}
                     {isAdmin && canBeCancelled && (
                         <Button variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => setCancelModalOpen(true)}>
                             Cancelar Operação
                         </Button>
                     )}
-                    {/* Mensagem caso nenhuma ação esteja disponível */}
                     {!((isPlanning && podeEditar) || (isAdmin && canBeCancelled)) && (
                         <Typography variant="body2" color="text.secondary">Nenhuma ação principal disponível para o status atual.</Typography>
                     )}
@@ -208,7 +223,4 @@ function EventDetail() {
         </Container>
     );
 }
-
-export default EventDetail;
-
 export default EventDetail;
