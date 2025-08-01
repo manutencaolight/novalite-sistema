@@ -867,7 +867,7 @@ def gerar_guia_saida_pdf(request, evento_id):
 
         
 # Em: core/views.py
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def gerar_relatorio_avarias_pdf(request, evento_id):
     try:
