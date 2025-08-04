@@ -1,4 +1,4 @@
-# Em: core/serializers.py (Versão com Ordem Corrigida)
+# Em: core/serializers.py (Versão com a sintaxe corrigida)
 
 from rest_framework import serializers
 from .models import (
@@ -46,17 +46,14 @@ class ConsumivelEventoSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = ConsumivelEvento
-        # O campo 'evento' foi adicionado à lista para que seja aceite na criação (POST)
         fields = ['id', 'evento', 'consumivel', 'consumivel_id', 'quantidade', 'conferido']
 
-# 1. Este serializer precisa ser definido ANTES de ser usado pelo ItemRetornadoSerializer
 class MaterialEventoNestedSerializer(serializers.ModelSerializer):
     equipamento = EquipamentoSerializer(read_only=True)
     class Meta:
         model = MaterialEvento
         fields = ['id', 'equipamento', 'item_descricao']
 
-# 2. Agora, o ItemRetornadoSerializer pode usar o MaterialEventoNestedSerializer sem erro
 class ItemRetornadoSerializer(serializers.ModelSerializer):
     material_evento = MaterialEventoNestedSerializer(read_only=True)
     condicao_display = serializers.CharField(source='get_condicao_display', read_only=True)
@@ -67,13 +64,11 @@ class ItemRetornadoSerializer(serializers.ModelSerializer):
             'observacao', 'data_retorno', 'condicao_display'
         ]
 
-# --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
 class MaterialEventoSerializer(serializers.ModelSerializer):
     equipamento = EquipamentoSerializer(read_only=True)
     equipamento_id = serializers.PrimaryKeyRelatedField(
         queryset=Equipamento.objects.all(), source='equipamento', write_only=True, required=False, allow_null=True
     )
-    # 1. Adiciona a serialização da lista de itens retornados
     itens_retornados = ItemRetornadoSerializer(many=True, read_only=True)
     
     quantidade_retornada_ok = serializers.IntegerField(read_only=True)
@@ -81,15 +76,12 @@ class MaterialEventoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MaterialEvento
-        # 2. Adiciona 'itens_retornados' à lista de campos
         fields = [
             'id', 'evento', 'equipamento', 'equipamento_id', 'item_descricao', 'quantidade',
             'quantidade_separada', 'conferido', 
             'quantidade_retornada_ok', 'quantidade_retornada_defeito',
             'itens_retornados'
         ]
-
-
 
 class EventoParaAvariaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -171,7 +163,7 @@ class AditivoOperacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = AditivoOperacao
         fields = ['id', 'operacao_original', 'criado_por', 'data_criacao', 'descricao', 'materiais_aditivo']
-        read_only_fields = ['criado_por'] # O 'criado_por' será definido na view
+        read_only_fields = ['criado_por']
 
     def create(self, validated_data):
         materiais_data = validated_data.pop('materiais_aditivo')
