@@ -1,5 +1,5 @@
-# Em: novalite_web/urls.py
-# VERSÃO FINAL - 31/07
+# FORÇANDO A ATUALIZAÇÃO FINAL - v2
+
 from django.contrib import admin
 # ... resto do arquivo
 from django.contrib import admin
