@@ -32,10 +32,10 @@ function AppLayout() {
             <header className="app-header">
                 <NavLink to="/" className="header-logo">
                 <img src={meuLogo} alt="Logotipo" />
-                    <h1>Sistema NOVALITE</h1>
+                    <h1></h1>
                 </NavLink>
                 <nav>
-                    <NavLink to="/"><DashboardIcon sx={{ mr: 1 }} />Quadro de Aviso</NavLink>
+                    <NavLink to="/"><DashboardIcon sx={{ mr: 1 }} />Quadro de Avisos</NavLink>
                     
                     {(user.role === 'admin' || user.role === 'planejamento') && (
                         <NavLink to="/eventos"><PostAddIcon sx={{ mr: 1 }} />Criar Lista de Material</NavLink>
