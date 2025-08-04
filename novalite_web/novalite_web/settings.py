@@ -1,11 +1,8 @@
-# C:\projeto_iluminacao\novalite_web\novalite_web\settings.py (Versão Corrigida)
-
 import os
 import dj_database_url
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-local-dev-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -14,7 +11,6 @@ RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# --- CORRIGIDO: Lista de Apps completa ---
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -27,7 +23,7 @@ INSTALLED_APPS = [
     'core',
     'import_export',
     'rest_framework',
-    'django_filters', # <-- ADICIONE ESTA LINHA
+    'django_filters',
     'rest_framework_simplejwt',
 ]
 
@@ -44,6 +40,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'novalite_web.urls'
+WSGI_APPLICATION = 'novalite_web.wsgi.application'
 
 TEMPLATES = [
     {
@@ -55,14 +52,11 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages', # <-- CORREÇÃO AQUI
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
 ]
-
-# --- CORRIGIDO: Apontamento para o WSGI correto ---
-WSGI_APPLICATION = 'novalite_web.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
@@ -71,12 +65,16 @@ DATABASES = {
     )
 }
 
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+AUTH_USER_MODEL = 'core.Usuario'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    )
+}
 
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
@@ -86,38 +84,16 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "https://sistemanovalite.onrender.com", # Para o seu site no ar
-    "http://localhost:3000",             # Para o seu desenvolvimento local
-]
-
-AUTH_USER_MODEL = 'core.Usuario'
-
-# No final do arquivo settings.py
-
-# Aponta para a nossa nova pasta de arquivos estáticos
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    "https://sistemanovalite.onrender.com",
+    "http://localhost:3000",
 ]
 
 JAZZMIN_SETTINGS = {
-    # O logo que aparece no canto superior esquerdo após o login
     "site_logo": "img/logo.png",
-
-    # O logo que aparece na tela de login
-    "login_logo": "img/logo.png", 
-}
-
-# No final do arquivo settings.py
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-    'DEFAULT_FILTER_BACKENDS': ( # <-- ADICIONE ESTE BLOCO
-        'django_filters.rest_framework.DjangoFilterBackend',
-    )
+    "login_logo": "img/logo.png",
 }
