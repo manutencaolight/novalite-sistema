@@ -26,7 +26,7 @@ function EquipmentList() {
     const [categoryError, setCategoryError] = useState(null);
 
     useEffect(() => {
-        authFetch('/equipamentos/categorias/')
+        authFetch('equipamentos/categorias/')
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
             .then(data => setCategories(data))
             .catch(err => setCategoryError(err.message));
@@ -36,7 +36,7 @@ function EquipmentList() {
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
         if (selectedCategory) params.append('categoria', selectedCategory);
-        const url = `/equipamentos/?${params.toString()}`;
+        const url = `equipamentos/?${params.toString()}`;
         
         authFetch(url)
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao buscar dados dos equipamentos.')))
@@ -53,7 +53,7 @@ function EquipmentList() {
 
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
-        const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
+        const url = isEditing ? `equipamentos/${equipamentoId}/` : 'equipamentos/';
         const method = isEditing ? 'PUT' : 'POST';
 
         authFetch(url, {
@@ -71,7 +71,7 @@ function EquipmentList() {
     
     const handleDelete = (id) => {
         if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
-            authFetch(`/equipamentos/${id}/`, { method: 'DELETE' })
+            authFetch(`equipamentos/${id}/`, { method: 'DELETE' })
               .then(response => {
                   if (response.ok) {
                     fetchEquipamentos();

@@ -90,7 +90,9 @@ export const authFetch = async (url, options = {}) => {
     }
 
     // --- CORREÇÃO 2: A URL final agora é montada de forma simples e correta ---
-    const finalUrl = `${baseURL}${url}`;
+const finalUrl = url.startsWith('/') 
+    ? `${baseURL}${url}`
+    : `${baseURL}/${url}`;
     let response = await fetch(finalUrl, { ...options, headers });
 
     return response;
