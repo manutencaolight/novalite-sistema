@@ -26,7 +26,7 @@ function EquipmentList() {
     const [categoryError, setCategoryError] = useState(null);
 
     useEffect(() => {
-        authFetch('/equipamentos/categorias/')
+        authFetch('/api/equipamentos/categorias/')
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
             .then(data => setCategories(data))
             .catch(err => setCategoryError(err.message));
