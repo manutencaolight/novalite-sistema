@@ -948,7 +948,7 @@ def gerar_relatorio_avarias_pdf(request, evento_id):
 # Em: core/views.py (adicionar no final do arquivo)
 
 # --- FUNÇÃO CORRIGIDA COM A IMPORTAÇÃO CERTA ---
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def relatorio_de_avarias_recentes(request):
     """
