@@ -1,4 +1,4 @@
-// Em: src/EquipmentList.js (Versão com Correção do Loop Infinito)
+// Em: src/EquipmentList.js (Versão Final com Correção de Autenticação)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -13,8 +13,10 @@ import BuildIcon from '@mui/icons-material/Build';
 import AddEquipmentForm from './AddEquipmentForm';
 import ReturnFromMaintenanceModal from './ReturnFromMaintenanceModal';
 import { authFetch } from './api';
+import { useAuth } from './AuthContext'; // 1. IMPORTAÇÃO ADICIONADA
 
 function EquipmentList() {
+    const { user } = useAuth(); // 2. OBTENÇÃO DO USUÁRIO DO CONTEXTO
     const [equipamentos, setEquipamentos] = useState([]);
     const [editingItem, setEditingItem] = useState(null);
     const [showForm, setShowForm] = useState(false);
@@ -25,25 +27,36 @@ function EquipmentList() {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [categoryError, setCategoryError] = useState(null);
 
+    // 3. CORREÇÃO DO 'useEffect' PARA BUSCAR CATEGORIAS
+    // Este efeito agora depende do 'user'. Ele só será executado quando 'user' for válido.
     useEffect(() => {
-        authFetch('/equipamentos/categorias/') // CORRETO: caminho absoluto a partir da base da API 
-            .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
-            .then(data => setCategories(data))
-            .catch(err => setCategoryError(err.message));
-    }, []);
+        if (user) {
+            authFetch('/equipamentos/categorias/')
+                .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
+                .then(data => setCategories(data))
+                .catch(err => setCategoryError(err.message));
+        }
+    }, [user]);
 
+    // 4. CORREÇÃO NA FUNÇÃO DE BUSCA PARA GARANTIR AUTENTICAÇÃO
     const fetchEquipamentos = useCallback(() => {
+        // Adicionamos uma "guarda": se não houver usuário, a função não faz nada.
+        if (!user) return;
+
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
         if (selectedCategory) params.append('categoria', selectedCategory);
-        const url = `equipamentos/?${params.toString()}`;
+        
+        // CORREÇÃO: Passar o caminho absoluto para authFetch
+        const url = `/equipamentos/?${params.toString()}`;
         
         authFetch(url)
             .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao buscar dados dos equipamentos.')))
             .then(data => setEquipamentos(data.results || data))
             .catch(err => setError(err.message));
-    }, [searchQuery, selectedCategory]);
+    }, [searchQuery, selectedCategory, user]); // Adicionamos 'user' às dependências
 
+    // Este useEffect agora está seguro, pois depende de uma função que só opera com usuário logado.
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchEquipamentos();
@@ -53,7 +66,7 @@ function EquipmentList() {
 
     const handleSave = (equipamentoData, equipamentoId) => {
         const isEditing = !!equipamentoId;
-        const url = isEditing ? `equipamentos/${equipamentoId}/` : 'equipamentos/';
+        const url = isEditing ? `/equipamentos/${equipamentoId}/` : '/equipamentos/';
         const method = isEditing ? 'PUT' : 'POST';
 
         authFetch(url, {
@@ -71,7 +84,7 @@ function EquipmentList() {
     
     const handleDelete = (id) => {
         if (window.confirm('Tem certeza que deseja excluir este equipamento?')) {
-            authFetch(`equipamentos/${id}/`, { method: 'DELETE' })
+            authFetch(`/equipamentos/${id}/`, { method: 'DELETE' })
               .then(response => {
                   if (response.ok) {
                     fetchEquipamentos();
@@ -82,7 +95,6 @@ function EquipmentList() {
          }
     };
     
-    // --- CORREÇÃO DA SINTAXE DAS FUNÇÕES ABAIXO ---
     const handleEditClick = (equipamento) => {
         setEditingItem(equipamento);
         setShowForm(true);
