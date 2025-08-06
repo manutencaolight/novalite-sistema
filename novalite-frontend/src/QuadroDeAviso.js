@@ -1,9 +1,8 @@
-// Em: src/QuadroDeAviso.js (Versão Final Corrigida com authFetch)
+// Em: src/QuadroDeAviso.js (Versão Corrigida com Autenticação)
 
-import { authFetch } from './api'; // 1. IMPORTA A FUNÇÃO CORRETA
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
+import {
     Paper, Typography, Container, Grid, Box, List,
     ListItem, ListItemText, ListItemIcon, Divider, Alert, ListItemButton
 } from '@mui/material';
@@ -16,41 +15,47 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { getStatusCalendarColor, STATUS_CONFIG } from './utils/colorUtils';
 import StatusLegend from './components/StatusLegend';
+import { authFetch } from './api';
+import { useAuth } from './AuthContext'; // 1. IMPORTAÇÃO ADICIONADA
 
 function QuadroDeAviso() {
+    const { user } = useAuth(); // 2. OBTENÇÃO DO USUÁRIO DO CONTEXTO
     const [stats, setStats] = useState({ proximos_eventos: [], em_manutencao: 0, total_equipamentos: 0 });
     const [avariasRecentes, setAvariasRecentes] = useState([]);
     const [eventosDoCalendario, setEventosDoCalendario] = useState([]);
     const [error, setError] = useState(null);
 
+    // 3. CORREÇÃO DO 'useEffect' PARA ESPERAR O LOGIN
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // --- 2. TODAS AS CHAMADAS AGORA USAM authFetch ---
-                const statsPromise = authFetch('/dashboard-stats/').then(res => res.json());
-                const eventosPromise = authFetch('/eventos/').then(res => res.json());
-                const avariasPromise = authFetch('/relatorio-avarias/').then(res => res.json());
+        // A função só será chamada se o 'user' for válido (login confirmado)
+        if (user) {
+            const fetchData = async () => {
+                try {
+                    const statsPromise = authFetch('/dashboard-stats/').then(res => res.json());
+                    const eventosPromise = authFetch('/eventos/').then(res => res.json());
+                    const avariasPromise = authFetch('/relatorio-avarias/').then(res => res.json());
 
-                // Aguarda todas as chamadas terminarem
-                const [statsData, eventosData, avariasData] = await Promise.all([
-                    statsPromise, eventosPromise, avariasPromise
-                ]);
+                    const [statsData, eventosData, avariasData] = await Promise.all([
+                        statsPromise, eventosPromise, avariasPromise
+                    ]);
 
-                setStats(statsData);
-                setEventosDoCalendario(eventosData.results || eventosData);
-                setAvariasRecentes(avariasData);
+                    setStats(statsData);
+                    setEventosDoCalendario(eventosData.results || eventosData);
+                    setAvariasRecentes(avariasData);
 
-            } catch (err) {
-                setError("Não foi possível carregar os dados. Verifique o servidor.");
-                console.error("Erro ao buscar dados do quadro de aviso:", err);
-            }
-        };
+                } catch (err) {
+                    setError("Não foi possível carregar os dados. Verifique o servidor.");
+                    console.error("Erro ao buscar dados do quadro de aviso:", err);
+                }
+            };
 
-        fetchData();
-    }, []);
+            fetchData();
+        }
+    }, [user]); // Adicionamos 'user' como dependência
 
     const modifiers = {};
     const modifiersStyles = {};
+    // O 'forEach' agora funcionará, pois 'eventosDoCalendario' receberá os dados corretos
     eventosDoCalendario.forEach(evento => {
         if (evento.data_evento) {
             const date = new Date(evento.data_evento.replace(/-/g, '/'));
@@ -67,6 +72,7 @@ function QuadroDeAviso() {
         root: { width: '100%' }
     };
 
+    // O resto do seu componente continua igual...
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
@@ -102,11 +108,9 @@ function QuadroDeAviso() {
                                         <ListItemButton component={Link} to={`/eventos/${evento.id}`}>
                                             <ListItemIcon><EventIcon color="action" /></ListItemIcon>
                                             
-                                            {/* --- 2. LÓGICA DE EXIBIÇÃO ATUALIZADA --- */}
                                             <ListItemText 
                                                 primary={
                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        {/* O círculo colorido */}
                                                         <Box
                                                             component="span"
                                                             sx={{
@@ -118,7 +122,6 @@ function QuadroDeAviso() {
                                                                 border: '1px solid rgba(0,0,0,0.1)'
                                                             }}
                                                         />
-                                                        {/* O nome do evento */}
                                                         {evento.nome || "Operação Sem Nome"}
                                                     </Box>
                                                 }
@@ -135,7 +138,6 @@ function QuadroDeAviso() {
                 </Grid>
             </Grid>
 
-            {/* --- SEÇÃO DE AVARIAS --- */}
             {avariasRecentes.length > 0 && (
                 <Alert severity="error" sx={{ mt: 3 }}>
                     <Typography variant="h6">Atenção: Itens com Avaria Recentes</Typography>
