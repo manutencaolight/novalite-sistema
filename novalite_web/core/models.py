@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db.models import Sum
+from django.utils import timezone # Garanta que esta importação exista
 
 class Cliente(models.Model):
     empresa = models.CharField(max_length=255, verbose_name="Empresa")
@@ -245,3 +246,39 @@ class MaterialAditivo(models.Model):
 
     def __str__(self):
         return f"{self.quantidade}x {self.equipamento.modelo}"    
+
+class RegistroManutencao(models.Model):
+    # --- CAMPO ADICIONADO ---
+    os_number = models.CharField(
+        max_length=20, 
+        unique=True, 
+        blank=True, 
+        null=True, 
+        verbose_name="Número da O.S."
+    )
+
+    STATUS_MANUTENCAO = (('AGUARDANDO_AVALIACAO', 'Aguardando Avaliação'), ('EM_REPARO', 'Em Reparo'), ('AGUARDANDO_PECAS', 'Aguardando Peças'), ('REPARADO', 'Reparado / Pronto para Estoque'))
+    equipamento = models.ForeignKey(Equipamento, related_name='historico_manutencao', on_delete=models.CASCADE)
+    item_retornado = models.OneToOneField(ItemRetornado, on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=30, choices=STATUS_MANUTENCAO, default='AGUARDANDO_AVALIACAO')
+    descricao_problema = models.TextField()
+    solucao_aplicada = models.TextField(blank=True, null=True)
+    data_entrada = models.DateTimeField(auto_now_add=True)
+    data_saida = models.DateTimeField(null=True, blank=True)
+    
+    # --- LÓGICA ADICIONADA ---
+    def save(self, *args, **kwargs):
+        # Verifica se é um objeto novo (ainda sem ID no banco)
+        is_new = self._state.adding
+        # Salva o objeto primeiro para que ele ganhe um ID (pk)
+        super().save(*args, **kwargs)
+        # Se for um objeto novo e o número da O.S. ainda não foi definido...
+        if is_new and not self.os_number:
+            # Gera o número da O.S. usando o ano e o ID do registo
+            self.os_number = f"OS-{self.data_entrada.year}-{self.pk:05d}"
+            # Salva o objeto novamente, apenas atualizando este campo
+            self.save(update_fields=['os_number'])
+
+    def __str__(self):
+        # --- ATUALIZADO PARA MOSTRAR A O.S. ---
+        return f"{self.os_number} - Manutenção para {self.equipamento.modelo}"

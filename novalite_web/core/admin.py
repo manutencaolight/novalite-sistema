@@ -10,7 +10,7 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     Cliente, Equipamento, Funcionario, Veiculo, Evento,
-    MaterialEvento, FotoPreEvento, Usuario, ItemRetornado, Consumivel, ConsumivelEvento
+    MaterialEvento, FotoPreEvento, Usuario, ItemRetornado, Consumivel, ConsumivelEvento, RegistroManutencao
 )
 
 # --- Resources e Admins Básicos ---
@@ -113,3 +113,10 @@ class ConsumivelAdmin(admin.ModelAdmin):
     list_display = ('nome', 'categoria', 'quantidade_estoque', 'unidade_medida')
     search_fields = ('nome',)
     list_filter = ('categoria',)
+
+@admin.register(RegistroManutencao)
+class RegistroManutencaoAdmin(admin.ModelAdmin):
+    list_display = ('os_number', 'equipamento', 'status', 'data_entrada', 'data_saida')
+    list_filter = ('status', 'data_entrada')
+    search_fields = ('os_number', 'equipamento__modelo', 'descricao_problema')
+    readonly_fields = ('os_number', 'data_entrada', 'data_saida')    

@@ -1,4 +1,4 @@
-// Em: src/MaintenanceDashboard.js (Versão com Histórico)
+// Em: src/MaintenanceDashboard.js (Versão com Histórico e Nº da O.S.)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -14,7 +14,6 @@ import SendToMaintenanceModal from './SendToMaintenanceModal';
 
 function MaintenanceDashboard() {
     const [maintenanceItems, setMaintenanceItems] = useState([]);
-    // --- NOVO: Estado para o histórico ---
     const [historyItems, setHistoryItems] = useState([]);
     
     const [selectedItem, setSelectedItem] = useState(null);
@@ -23,7 +22,6 @@ function MaintenanceDashboard() {
 
     const fetchData = useCallback(() => {
         setError(null);
-        // --- ATUALIZADO: Busca os dois endpoints ao mesmo tempo ---
         Promise.all([
             authFetch('/manutencao/').then(res => res.json()),
             authFetch('/manutencao-historico/').then(res => res.json())
@@ -42,7 +40,7 @@ function MaintenanceDashboard() {
     const handleSuccess = () => {
         setSelectedItem(null);
         setSendModalOpen(false);
-        fetchData(); // Recarrega ambos os dados
+        fetchData(); 
     };
 
     return (
@@ -67,6 +65,8 @@ function MaintenanceDashboard() {
                 <Table>
                     <TableHead>
                         <TableRow>
+                            {/* --- COLUNA ADICIONADA --- */}
+                            <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Problema Reportado</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Data de Entrada</TableCell>
@@ -77,6 +77,8 @@ function MaintenanceDashboard() {
                     <TableBody>
                         {(maintenanceItems || []).map((item) => (
                             <TableRow key={item.id} hover>
+                                {/* --- DADO ADICIONADO --- */}
+                                <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.descricao_problema}</TableCell>
                                 <TableCell>{new Date(item.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
@@ -97,12 +99,14 @@ function MaintenanceDashboard() {
 
             <Divider sx={{ my: 4 }} />
 
-            {/* --- NOVO: Tabela de Histórico --- */}
+            {/* Tabela de Histórico */}
             <Typography variant="h5" component="h2" gutterBottom>Histórico de Reparos Concluídos</Typography>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
+                             {/* --- COLUNA ADICIONADA --- */}
+                            <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Solução Aplicada</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Data de Entrada</TableCell>
@@ -112,6 +116,8 @@ function MaintenanceDashboard() {
                     <TableBody>
                         {(historyItems || []).map((item) => (
                             <TableRow key={item.id} hover>
+                                {/* --- DADO ADICIONADO --- */}
+                                <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.solucao_aplicada || "N/A"}</TableCell>
                                 <TableCell>{new Date(item.data_entrada).toLocaleDateString('pt-BR')}</TableCell>
