@@ -1,4 +1,4 @@
-// Em: src/MaintenanceDashboard.js (Versão com Histórico e Nº da O.S.)
+// Em: src/MaintenanceDashboard.js (Versão Final com O.S. e Correção de Auth)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -10,9 +10,11 @@ import BuildIcon from '@mui/icons-material/Build';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { authFetch } from './api';
 import ManageMaintenanceModal from './ManageMaintenanceModal';
-import SendToMaintenanceModal from './SendToMaintenanceModal'; 
+import SendToMaintenanceModal from './SendToMaintenanceModal';
+import { useAuth } from './AuthContext'; // 1. Correção de Auth
 
 function MaintenanceDashboard() {
+    const { user } = useAuth(); // 2. Correção de Auth
     const [maintenanceItems, setMaintenanceItems] = useState([]);
     const [historyItems, setHistoryItems] = useState([]);
     
@@ -33,9 +35,12 @@ function MaintenanceDashboard() {
         .catch(err => setError('Falha ao carregar dados da manutenção.'));
     }, []);
 
+    // 3. Correção de Auth
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (user) {
+            fetchData();
+        }
+    }, [user, fetchData]);
 
     const handleSuccess = () => {
         setSelectedItem(null);
@@ -65,7 +70,7 @@ function MaintenanceDashboard() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            {/* --- COLUNA ADICIONADA --- */}
+                            {/* --- COLUNA DA O.S. ADICIONADA --- */}
                             <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Problema Reportado</TableCell>
@@ -77,7 +82,7 @@ function MaintenanceDashboard() {
                     <TableBody>
                         {(maintenanceItems || []).map((item) => (
                             <TableRow key={item.id} hover>
-                                {/* --- DADO ADICIONADO --- */}
+                                {/* --- DADO DA O.S. ADICIONADO --- */}
                                 <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.descricao_problema}</TableCell>
@@ -105,7 +110,7 @@ function MaintenanceDashboard() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                             {/* --- COLUNA ADICIONADA --- */}
+                             {/* --- COLUNA DA O.S. ADICIONADA --- */}
                             <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Solução Aplicada</TableCell>
@@ -116,7 +121,7 @@ function MaintenanceDashboard() {
                     <TableBody>
                         {(historyItems || []).map((item) => (
                             <TableRow key={item.id} hover>
-                                {/* --- DADO ADICIONADO --- */}
+                                {/* --- DADO DA O.S. ADICIONADO --- */}
                                 <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.solucao_aplicada || "N/A"}</TableCell>
