@@ -10,7 +10,7 @@ export const STATUS_CONFIG = {
     AGUARDANDO_CONFERENCIA: { 
         label: 'Aguardando Conferência', 
         chipColor: 'info', 
-        calendarColor: '#0286fa' // azul claro 
+        calendarColor: '#f2fa02' // Amarelo 
     },
     AGUARDANDO_SAIDA: { 
         label: 'Aguardando Saída', 
@@ -30,7 +30,7 @@ export const STATUS_CONFIG = {
     CANCELADO: { 
         label: 'Cancelado', 
         chipColor: 'error', 
-        calendarColor: '#fa0202' // 
+        calendarColor: '#fa0202' // Vermelho
     },
     DEFAULT: {
         label: 'Desconhecido',
