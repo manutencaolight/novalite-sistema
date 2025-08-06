@@ -1,8 +1,7 @@
-// Em: src/api.js (Versão Corrigida e Simplificada)
+// Em: src/api.js (Versão com Melhoria na Experiência do Usuário)
 
 import { jwtDecode } from 'jwt-decode';
 
-// --- CORREÇÃO 1: Definimos uma única baseURL que já inclui o /api ---
 const baseURL = 'https://novalite-sistema.onrender.com/api';
 
 const getAuthTokens = () => {
@@ -15,7 +14,6 @@ const setAuthTokens = (tokens) => {
 };
 
 export const loginUser = async (username, password) => {
-    // A chamada agora usa a baseURL + o endpoint específico
     const response = await fetch(`${baseURL}/token/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,18 +43,23 @@ const refreshToken = async () => {
 
         const data = await response.json();
         if (response.ok) {
-            // Atualiza apenas o access token, mantendo o refresh token original
             const newTokens = { ...tokens, access: data.access };
             setAuthTokens(newTokens);
             return newTokens.access;
         } else {
+            // --- ALTERAÇÃO AQUI ---
+            // Avisa o usuário e recarrega a página de forma controlada.
+            alert('Sua sessão expirou ou a conexão foi perdida. A página será recarregada.');
             localStorage.removeItem('authTokens');
-            window.location.href = '/login';
+            window.location.reload();
             return null;
         }
     } catch (error) {
+        // --- E AQUI TAMBÉM ---
+        // Cobre falhas de rede que impedem a comunicação com o servidor.
+        alert('Falha ao reconectar com o servidor. A página será recarregada.');
         localStorage.removeItem('authTokens');
-        window.location.href = '/login';
+        window.location.reload();
         return null;
     }
 };
@@ -89,7 +92,6 @@ export const authFetch = async (url, options = {}) => {
         headers['Content-Type'] = 'application/json';
     }
 
-    // --- CORREÇÃO 2: A URL final agora é montada de forma simples e correta ---
 const finalUrl = url.startsWith('/') 
     ? `${baseURL}${url}`
     : `${baseURL}/${url}`;
