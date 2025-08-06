@@ -32,6 +32,9 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
     path('api/equipamentos/categorias/', views.get_equipment_categories, name='equipment-categories'),
+        # ADICIONE ESTA NOVA LINHA
+    path('api/test-deploy/', views.test_view, name='test-deploy'),
+
     path('api/relatorio-avarias/', views.relatorio_de_avarias_recentes, name='relatorio_avarias'),
     path('api/reports/evento/<int:evento_id>/', views.evento_report_pdf, name='evento_report_pdf'),
     path('api/reports/guia-saida/<int:evento_id>/', views.gerar_guia_saida_pdf, name='gerar_guia_saida_pdf'),

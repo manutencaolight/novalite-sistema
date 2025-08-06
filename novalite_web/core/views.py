@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import JsonResponse # Adicione esta importação no topo se não existir
 
 
 # Imports do ReportLab
@@ -1035,4 +1036,8 @@ def gerar_guia_reforco_pdf(request, evento_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)   
 
-
+# ADICIONE ESTA NOVA FUNÇÃO NO FINAL DO ARQUIVO
+@api_view(['GET'])
+@permission_classes([AllowAny]) # Sem autenticação para facilitar o teste
+def test_view(request):
+    return JsonResponse({'status': 'ok', 'message': 'A rota de teste para deploy funciona!'})
