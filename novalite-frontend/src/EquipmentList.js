@@ -31,7 +31,7 @@ function EquipmentList() {
     // Este efeito agora depende do 'user'. Ele só será executado quando 'user' for válido.
     useEffect(() => {
         if (user) {
-            authFetch('/equipamentos/categorias/')
+            authFetch('/inventario/lista-categorias/')
                 .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao carregar categorias.')))
                 .then(data => setCategories(data))
                 .catch(err => setCategoryError(err.message));

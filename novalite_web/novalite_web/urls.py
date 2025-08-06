@@ -31,7 +31,7 @@ urlpatterns = [
     path('api/token/', views.MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
-    path('api/equipamentos/categorias/', views.get_equipment_categories, name='equipment-categories'),
+    path('api/inventario/lista-categorias/', views.get_equipment_categories, name='equipment-categories'),
         # ADICIONE ESTA NOVA LINHA
     path('api/test-deploy/', views.test_view, name='test-deploy'),
 
