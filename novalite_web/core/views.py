@@ -1036,8 +1036,3 @@ def gerar_guia_reforco_pdf(request, evento_id):
     except Exception as e:
         return Response({'error': str(e)}, status=500)   
 
-# ADICIONE ESTA NOVA FUNÇÃO NO FINAL DO ARQUIVO
-@api_view(['GET'])
-@permission_classes([AllowAny]) # Sem autenticação para facilitar o teste
-def test_view(request):
-    return JsonResponse({'status': 'ok', 'message': 'A rota de teste para deploy funciona!'})
