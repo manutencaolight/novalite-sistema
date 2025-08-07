@@ -51,15 +51,15 @@ function LoginPage() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                     />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        label="Senha"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                   <PasswordFieldWithCapsLock
+                       id="password-field" // É bom ter um id para o InputLabel
+                       margin="normal"
+                       required
+                       fullWidth
+                       label="Senha"
+                       value={password}
+                       onChange={(e) => setPassword(e.target.value)}
+                   />
                     {error && <Alert severity="error" sx={{ width: '100%', mt: 2 }}>{error}</Alert>}
                     <Button
                         type="submit"
