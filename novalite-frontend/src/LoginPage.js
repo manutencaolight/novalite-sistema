@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { Container, Paper, Box, Typography, TextField, Button, Alert } from '@mui/material';
 // --- 1. IMPORTA A IMAGEM COMO UM MÓDULO ---
 import meuLogo from './novalite_logo.png'; 
+import PasswordFieldWithCapsLock from './PasswordFieldWithCapsLock'; // 1. Importe o novo componente
 
 function LoginPage() {
     const [username, setUsername] = useState('');
