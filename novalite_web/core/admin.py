@@ -1,4 +1,4 @@
-# Em: core/admin.py (Versão Final Consolidada)
+# Em: core/admin.py (Versão Final com Exportação para todos os modelos)
 
 from django.contrib import admin
 from django.urls import reverse
@@ -58,11 +58,33 @@ class EventoResource(resources.ModelResource):
         column_name='veiculos',
         attribute='veiculos',
         widget=widgets.ManyToManyWidget(Veiculo, field='nome', separator=', '))
-
     class Meta:
         model = Evento
         fields = ('id', 'nome', 'status', 'tipo_evento', 'local', 'cliente', 'data_evento', 'data_termino', 'equipe', 'veiculos', 'criado_por__username')
         export_order = fields
+
+# --- NOVO RESOURCE: Consumivel ---
+class ConsumivelResource(resources.ModelResource):
+    class Meta:
+        model = Consumivel
+        fields = ('id', 'nome', 'categoria', 'unidade_medida', 'quantidade_estoque')
+
+# --- NOVO RESOURCE: RegistroManutencao ---
+class RegistroManutencaoResource(resources.ModelResource):
+    equipamento = fields.Field(
+        column_name='equipamento',
+        attribute='equipamento',
+        widget=widgets.ForeignKeyWidget(Equipamento, 'modelo'))
+    class Meta:
+        model = RegistroManutencao
+        fields = ('id', 'os_number', 'equipamento', 'status', 'descricao_problema', 'solucao_aplicada', 'data_entrada', 'data_saida')
+
+# --- NOVO RESOURCE: Usuario ---
+class UsuarioResource(resources.ModelResource):
+    class Meta:
+        model = Usuario
+        # Excluímos campos sensíveis como a senha
+        fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role', 'is_staff', 'is_active', 'date_joined')
 
 
 # --- Seção 2: Classes 'Inline' (Definidas antes de serem usadas) ---
@@ -72,9 +94,6 @@ class MaterialEventoInline(admin.TabularInline):
     extra = 1
     fields = ('equipamento', 'quantidade')
     autocomplete_fields = ('equipamento',)
-    formfield_overrides = {
-        models.IntegerField: {'widget': admin.widgets.AdminTextInputWidget(attrs={'style': 'width: 60px; text-align: center;'})},
-    }
 
 class FotoPreEventoInline(admin.TabularInline):
     model = FotoPreEvento
@@ -136,20 +155,23 @@ class EventoAdmin(ImportExportModelAdmin):
     acao_do_evento.short_description = 'Relatório Completo'
 
 @admin.register(Usuario)
-class UsuarioAdmin(UserAdmin):
+class UsuarioAdmin(ImportExportModelAdmin, UserAdmin): # <-- ATUALIZADO
+    resource_classes = [UsuarioResource]              # <-- ADICIONADO
     fieldsets = UserAdmin.fieldsets + (('Nível de Acesso Customizado', {'fields': ('role',)}),)
     add_fieldsets = UserAdmin.add_fieldsets + (('Nível de Acesso Customizado', {'fields': ('role',)}),)
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'role')
     list_filter = UserAdmin.list_filter + ('role',)
 
 @admin.register(Consumivel)
-class ConsumivelAdmin(admin.ModelAdmin):
+class ConsumivelAdmin(ImportExportModelAdmin): # <-- ATUALIZADO
+    resource_classes = [ConsumivelResource]   # <-- ADICIONADO
     list_display = ('nome', 'categoria', 'quantidade_estoque', 'unidade_medida')
     search_fields = ('nome',)
     list_filter = ('categoria',)
 
 @admin.register(RegistroManutencao)
-class RegistroManutencaoAdmin(admin.ModelAdmin):
+class RegistroManutencaoAdmin(ImportExportModelAdmin): # <-- ATUALIZADO
+    resource_classes = [RegistroManutencaoResource]  # <-- ADICIONADO
     list_display = ('os_number', 'equipamento', 'status', 'data_entrada', 'data_saida')
     list_filter = ('status', 'data_entrada')
     search_fields = ('os_number', 'equipamento__modelo', 'descricao_problema')
