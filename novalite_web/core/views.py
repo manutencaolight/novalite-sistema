@@ -262,16 +262,14 @@ class EventoViewSet(viewsets.ModelViewSet):
         try:
             original_evento = self.get_object()
         
-            # --- LÓGICA ATUALIZADA PARA RECEBER OS NOVOS CAMPOS ---
             novo_nome = request.data.get('novo_nome')
             nova_data_str = request.data.get('nova_data_evento')
-            nova_data_termino_str = request.data.get('nova_data_termino') # Novo
+            nova_data_termino_str = request.data.get('nova_data_termino')
 
             if not nova_data_str:
                 return Response({'error': 'A nova data de início é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
 
             nova_data_inicio = datetime.strptime(nova_data_str, '%Y-%m-%d').date()
-            # Converte a data de término apenas se ela for fornecida
             nova_data_termino = datetime.strptime(nova_data_termino_str, '%Y-%m-%d').date() if nova_data_termino_str else None
 
             materiais_originais = list(original_evento.materialevento_set.all())
@@ -281,13 +279,17 @@ class EventoViewSet(viewsets.ModelViewSet):
             novo_evento.pk = None
             novo_evento.id = None
         
-            # Usa o novo nome se fornecido, senão cria um padrão
             novo_evento.nome = novo_nome or f"Cópia de - {original_evento.nome or 'Operação'}"
         
             novo_evento.data_evento = nova_data_inicio
-            novo_evento.data_termino = nova_data_termino # Define a nova data de término
+            novo_evento.data_termino = nova_data_termino
             novo_evento.status = 'PLANEJAMENTO'
             novo_evento.observacao_correcao = ""
+            
+            # --- CORREÇÃO ADICIONADA AQUI ---
+            # Atribui o usuário que está fazendo a clonagem como o novo criador.
+            novo_evento.criado_por = request.user
+            
             novo_evento.save()
         
             for material in materiais_originais:
@@ -305,7 +307,6 @@ class EventoViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
     @action(detail=True, methods=['post'])
     def mudar_status(self, request, pk=None):

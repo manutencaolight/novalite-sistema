@@ -1,4 +1,4 @@
-// Em: src/EventList.js (Versão com Alerta de Correção)
+// Em: src/EventList.js (Versão com Botão de Imprimir)
 
 import { authFetch } from './api';
 import React, { useState, useEffect } from 'react';
@@ -8,9 +8,11 @@ import {
     TableHead, TableRow, TableCell, TableBody, Chip, Tooltip, IconButton 
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'; // Importa o ícone de alerta
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import PrintIcon from '@mui/icons-material/Print'; // --- 1. ÍCONE ADICIONADO ---
 import NewOperationModal from './NewOperationModal';
 
+// ... (função getStatusChipColor não muda) ...
 const getStatusChipColor = (status) => {
     const colors = {
         EM_ANDAMENTO: "primary", FINALIZADO: "success", CANCELADO: "error",
@@ -25,12 +27,38 @@ function EventList() {
     const [showNewOpModal, setShowNewOpModal] = useState(false);
 
     const fetchEventos = () => {
-        authFetch('/eventos/') // <-- Correção aqui
+        authFetch('/eventos/')
             .then(res => res.json())
             .then(data => setEventos(data));
     };
 
     useEffect(() => { fetchEventos(); }, []);
+
+    // --- 2. FUNÇÃO PARA LIDAR COM A IMPRESSÃO ---
+    const handlePrint = (eventoId, eventoNome) => {
+        // Chama o endpoint do backend que gera o PDF
+        authFetch(`/reports/evento/${eventoId}/`)
+            .then(response => {
+                if (response.ok) {
+                    return response.blob(); // Converte a resposta para um arquivo binário (blob)
+                }
+                throw new Error('Falha ao gerar o relatório.');
+            })
+            .then(blob => {
+                // Cria uma URL temporária para o arquivo PDF
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                // Define o nome do arquivo que será baixado
+                a.download = `Relatorio_${eventoNome.replace(/ /g, '_') || 'Evento'}.pdf`;
+                document.body.appendChild(a);
+                a.click(); // Simula o clique no link para iniciar o download
+                window.URL.revokeObjectURL(url); // Libera a memória
+                document.body.removeChild(a);
+            })
+            .catch(error => alert(`Erro ao imprimir: ${error.message}`));
+    };
 
     return (
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -52,18 +80,16 @@ function EventList() {
                             <TableCell sx={{ fontWeight: 'bold' }}>Data</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Criado por</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Ação</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>Ações</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {eventos.map((evento) => (
                             <TableRow key={evento.id} hover sx={{
-                                // Destaca a linha inteira se precisar de correção
                                 backgroundColor: evento.status === 'PLANEJAMENTO' && evento.observacao_correcao ? '#fffbe6' : 'inherit'
                             }}>
                                 <TableCell>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        {/* --- ÍCONE DE ALERTA ADICIONADO AQUI --- */}
                                         {evento.status === 'PLANEJAMENTO' && evento.observacao_correcao && (
                                             <Tooltip title={`Correção necessária: ${evento.observacao_correcao}`}>
                                                 <IconButton color="warning" size="small" sx={{ mr: 1 }}>
@@ -81,6 +107,12 @@ function EventList() {
                                 </TableCell>
                                 <TableCell>{evento.criado_por?.username || 'N/A'}</TableCell>
                                 <TableCell align="right">
+                                    {/* --- 3. BOTÃO DE IMPRIMIR ADICIONADO AQUI --- */}
+                                    <Tooltip title="Imprimir Relatório Completo">
+                                        <IconButton onClick={() => handlePrint(evento.id, evento.nome)} color="secondary">
+                                            <PrintIcon />
+                                        </IconButton>
+                                    </Tooltip>
                                     <Button component={Link} to={`/eventos/${evento.id}`} size="small">
                                         Gerenciar
                                     </Button>
