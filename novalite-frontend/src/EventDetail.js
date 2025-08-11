@@ -40,7 +40,6 @@ function EventDetail() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    // O restante das suas funções (handleAction, etc.) permanecem as mesmas...
     const handleAction = (actionUrl, body = {}, confirmationMessage = '') => {
         if (confirmationMessage && !window.confirm(confirmationMessage)) return;
         authFetch(`/eventos/${id}/${actionUrl}/`, { method: 'POST', body: JSON.stringify(body) })
@@ -96,7 +95,6 @@ function EventDetail() {
 
             <Button component={Link} to="/eventos" sx={{ mb: 2 }}>← Voltar para a Lista</Button>
             
-            {/* --- SEÇÃO DO CABEÇALHO --- */}
             <Paper sx={{ p: 3, mb: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
@@ -132,6 +130,7 @@ function EventDetail() {
                                 </TableHead>
                                 <TableBody>
                                     {/* --- CORREÇÃO APLICADA AQUI --- */}
+                                    {/* Garante que a lista exista antes de tentar mapeá-la, evitando erros */}
                                     {(evento.materialevento_set || []).map((mat) => (
                                         <TableRow key={mat.id} hover>
                                             <TableCell>{mat.equipamento?.modelo || mat.item_descricao}</TableCell>
@@ -178,6 +177,7 @@ function EventDetail() {
                                 </TableHead>
                                 <TableBody>
                                     {/* --- CORREÇÃO APLICADA AQUI --- */}
+                                    {/* Garante que a lista exista antes de tentar mapeá-la, evitando erros */}
                                     {(evento.consumiveis_set || []).map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell>{item.consumivel.nome}</TableCell>
@@ -201,7 +201,6 @@ function EventDetail() {
                 </Grid>
             </Grid>
             
-            {/* --- SEÇÃO DOS BOTÕES DE AÇÃO --- */}
             <Paper sx={{ p: 3, mt: 8 }}>
                 <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
