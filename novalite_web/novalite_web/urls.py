@@ -1,7 +1,7 @@
-# Em: novalite_web/novalite_web/urls.py (VERSÃO SIMPLIFICADA E CORRETA)
+# Em: novalite_web/urls.py (Versão Corrigida e Final)
 
 from django.contrib import admin
-from django.urls import path, include # Adicione 'include'
+from django.urls import path, include # --- 'include' ADICIONADO AQUI ---
 from django.conf import settings
 from django.conf.urls.static import static
 from core import views
@@ -10,8 +10,8 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('admin/', admin.site.urls),
 
-    # Esta linha agora carrega TODAS as URLs do arquivo core/urls.py
-    # e adiciona o prefixo 'api/' a todas elas de uma só vez.
+    # --- LINHA CORRIGIDA ---
+    # Esta linha agora "inclui" todas as rotas definidas no seu novo arquivo core/urls.py
     path('api/', include('core.urls')), 
 ]
 
