@@ -17,7 +17,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import MyTokenObtainPairSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import JsonResponse # Adicione esta importação no topo se não existir
-
+from rest_framework.views import APIView
 
 # Imports do ReportLab
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
@@ -30,13 +30,13 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao
+    Consumivel, ConsumivelEvento, AditivoOperacao, RegistroPonto
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer,
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
-    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer
+    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer, RegistroPontoSerializer
 )
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -587,6 +587,56 @@ class EventoViewSet(viewsets.ModelViewSet):
         evento.save()
 
         return Response({'status': 'Operação cancelada com sucesso!'})
+    @action(detail=True, methods=['post'], url_path='clock-in')
+    @transaction.atomic
+    def clock_in(self, request, pk=None):
+        evento = self.get_object()
+        user = request.user
+
+        # Encontra o registro de Funcionario associado ao Usuario logado
+        try:
+            # Assumindo que o email do Usuario é o mesmo do Funcionario
+            funcionario = Funcionario.objects.get(email=user.email)
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Registro de funcionário não encontrado para este usuário.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Verifica se o funcionário está na equipe do evento
+        if not evento.equipe.filter(id=funcionario.id).exists():
+            return Response({'error': 'Você não está na equipe deste evento.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Verifica se já não há um ponto aberto para este funcionário neste evento
+        ponto_aberto = RegistroPonto.objects.filter(evento=evento, funcionario=funcionario, status='PRESENTE').exists()
+        if ponto_aberto:
+            return Response({'error': 'Você já registrou sua entrada neste evento.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Cria o novo registro de ponto
+        RegistroPonto.objects.create(evento=evento, funcionario=funcionario)
+        return Response({'status': 'Entrada registrada com sucesso!'}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='clock-out')
+    @transaction.atomic
+    def clock_out(self, request, pk=None):
+        evento = self.get_object()
+        user = request.user
+        
+        try:
+            funcionario = Funcionario.objects.get(email=user.email)
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Registro de funcionário não encontrado para este usuário.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Encontra o registro de ponto aberto
+        try:
+            ponto_a_fechar = RegistroPonto.objects.get(evento=evento, funcionario=funcionario, status='PRESENTE')
+        except RegistroPonto.DoesNotExist:
+            return Response({'error': 'Nenhum registro de entrada ativo encontrado para você neste evento.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Atualiza o registro com a hora de saída
+        ponto_a_fechar.data_hora_saida = timezone.now()
+        ponto_a_fechar.status = 'FINALIZADO'
+        ponto_a_fechar.save()
+        
+        return Response({'status': 'Saída registrada com sucesso!'}, status=status.HTTP_200_OK)
+    
     
 class AditivoOperacaoViewSet(viewsets.ModelViewSet):
     queryset = AditivoOperacao.objects.all()
@@ -1035,5 +1085,28 @@ def gerar_guia_reforco_pdf(request, evento_id):
         doc.build(story)
         return response
     except Exception as e:
-        return Response({'error': str(e)}, status=500)   
+        return Response({'error': str(e)}, status=500)
+
+
+class MeusEventosView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Encontra o funcionário associado ao usuário logado
+            funcionario = Funcionario.objects.get(email=request.user.email)
+            # Busca todos os eventos onde este funcionário está na equipe
+            eventos = Evento.objects.filter(equipe=funcionario).order_by('-data_evento')
+            # Busca os registros de ponto para esses eventos
+            registros = RegistroPonto.objects.filter(evento__in=eventos, funcionario=funcionario)
+
+            eventos_serializer = EventoSerializer(eventos, many=True)
+            registros_serializer = RegistroPontoSerializer(registros, many=True)
+            
+            return Response({
+                'eventos': eventos_serializer.data,
+                'registros_ponto': registros_serializer.data
+            })
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)    
 

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo
+    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, RegistroPonto
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -171,3 +171,12 @@ class AditivoOperacaoSerializer(serializers.ModelSerializer):
         for material_data in materiais_data:
             MaterialAditivo.objects.create(aditivo=aditivo, **material_data)
         return aditivo
+
+class RegistroPontoSerializer(serializers.ModelSerializer):
+    duracao = serializers.CharField(read_only=True)
+    evento_nome = serializers.CharField(source='evento.nome', read_only=True)
+    funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
+
+    class Meta:
+        model = RegistroPonto
+        fields = ['id', 'evento', 'evento_nome', 'funcionario', 'funcionario_nome', 'data_hora_entrada', 'data_hora_saida', 'status', 'duracao']

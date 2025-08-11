@@ -83,6 +83,7 @@ class Usuario(AbstractUser):
         ('planejamento', 'Planejamento'),
         ('logistica', 'Logística'),
         ('manutencao', 'Manutenção'),
+        ('freelancer_ponto', 'Freelancer (Apenas Ponto)'),
     )
     role = models.CharField(
         max_length=20, 
@@ -282,3 +283,33 @@ class RegistroManutencao(models.Model):
     def __str__(self):
         # --- ATUALIZADO PARA MOSTRAR A O.S. ---
         return f"{self.os_number} - Manutenção para {self.equipamento.modelo}"
+
+# --- NOVO MODELO ADICIONADO NO FINAL DO ARQUIVO ---
+class RegistroPonto(models.Model):
+    STATUS_CHOICES = (
+        ('PRESENTE', 'Presente'),
+        ('FINALIZADO', 'Finalizado'),
+    )
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="registros_ponto")
+    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name="registros_ponto")
+    data_hora_entrada = models.DateTimeField(auto_now_add=True, verbose_name="Entrada")
+    data_hora_saida = models.DateTimeField(null=True, blank=True, verbose_name="Saída")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PRESENTE')
+
+    class Meta:
+        verbose_name = "Registro de Ponto"
+        verbose_name_plural = "Registros de Ponto"
+        ordering = ['-data_hora_entrada']
+
+    def __str__(self):
+        return f"Ponto de {self.funcionario.nome} em {self.evento.nome}"
+
+    @property
+    def duracao(self):
+        if self.data_hora_saida and self.data_hora_entrada:
+            delta = self.data_hora_saida - self.data_hora_entrada
+            total_seconds = int(delta.total_seconds())
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, _ = divmod(remainder, 60)
+            return f"{hours:02d}:{minutes:02d}"
+        return "Em andamento"    
