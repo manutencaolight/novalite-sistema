@@ -4,12 +4,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework import routers # 1. Importa a biblioteca de routers
+from rest_framework import routers
 from core import views
 from core.views import MyTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 
-# 2. Cria a instância do router PRIMEIRO
 router = routers.DefaultRouter()
 router.register(r'clientes', views.ClienteViewSet)
 router.register(r'funcionarios', views.FuncionarioViewSet)
@@ -35,12 +34,14 @@ urlpatterns = [
     path('api/relatorio-avarias/', views.relatorio_de_avarias_recentes, name='relatorio_avarias'),
     path('api/reports/evento/<int:evento_id>/', views.evento_report_pdf, name='evento_report_pdf'),
     path('api/reports/guia-saida/<int:evento_id>/', views.gerar_guia_saida_pdf, name='gerar_guia_saida_pdf'),
-    path('api/reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf')
+    
+    # --- VÍRGULA ADICIONADA AQUI ---
+    path('api/reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
+    
     path('api/meus-eventos/', views.MeusEventosView.as_view(), name='meus-eventos'),
     path('api/reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),
 ]
+
 # Configuração para servir arquivos de mídia em desenvolvimento
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-    
