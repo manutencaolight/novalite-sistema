@@ -1,4 +1,4 @@
-// Em: src/EventDetail.js (Versão com Correção na Exibição das Tabelas)
+// Em: src/EventDetail.js (Versão com a Equipe de volta)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { useAuth } from './AuthContext';
 import { authFetch } from './api';
 import AddConsumableForm from './AddConsumableForm';
 import AditivoModal from './AditivoModal';
+import TeamManagement from './TeamManagement'; // --- 1. IMPORTE O NOVO COMPONENTE ---
 
 function EventDetail() {
     const [evento, setEvento] = useState(null);
@@ -77,7 +78,6 @@ function EventDetail() {
         });
     };
 
-
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!evento) return <p>Carregando...</p>;
 
@@ -129,8 +129,6 @@ function EventDetail() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {/* --- CORREÇÃO APLICADA AQUI --- */}
-                                    {/* Garante que a lista exista antes de tentar mapeá-la, evitando erros */}
                                     {(evento.materialevento_set || []).map((mat) => (
                                         <TableRow key={mat.id} hover>
                                             <TableCell>{mat.equipamento?.modelo || mat.item_descricao}</TableCell>
@@ -176,8 +174,6 @@ function EventDetail() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {/* --- CORREÇÃO APLICADA AQUI --- */}
-                                    {/* Garante que a lista exista antes de tentar mapeá-la, evitando erros */}
                                     {(evento.consumiveis_set || []).map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell>{item.consumivel.nome}</TableCell>
@@ -199,6 +195,14 @@ function EventDetail() {
                         {podeEditar && <AddConsumableForm eventoId={id} onConsumableAdded={fetchData} existingConsumables={evento.consumiveis_set || []} />}
                     </Paper>
                 </Grid>
+
+                {/* --- 2. ADICIONE O COMPONENTE DE EQUIPE AQUI --- */}
+                {/* Ele só será renderizado se a condição 'podeEditar' for verdadeira */}
+                {podeEditar && (
+                    <Grid item xs={12}>
+                        <TeamManagement evento={evento} onTeamUpdate={fetchData} />
+                    </Grid>
+                )}
             </Grid>
             
             <Paper sx={{ p: 3, mt: 8 }}>
@@ -222,4 +226,5 @@ function EventDetail() {
         </Container>
     );
 }
+
 export default EventDetail;
