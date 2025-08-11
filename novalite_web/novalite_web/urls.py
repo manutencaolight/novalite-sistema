@@ -35,7 +35,8 @@ urlpatterns = [
     path('api/relatorio-avarias/', views.relatorio_de_avarias_recentes, name='relatorio_avarias'),
     path('api/reports/evento/<int:evento_id>/', views.evento_report_pdf, name='evento_report_pdf'),
     path('api/reports/guia-saida/<int:evento_id>/', views.gerar_guia_saida_pdf, name='gerar_guia_saida_pdf'),
-    path('api/reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
+    path('api/reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf')
+    path('api/meus-eventos/', views.MeusEventosView.as_view(), name='meus-eventos'),
     path('api/reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),
 ]
 # Configuração para servir arquivos de mídia em desenvolvimento
