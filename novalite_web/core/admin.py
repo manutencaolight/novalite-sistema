@@ -11,7 +11,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Cliente, Equipamento, Funcionario, Veiculo, Evento,
     MaterialEvento, FotoPreEvento, Usuario, ItemRetornado, Consumivel, ConsumivelEvento,
-    RegistroManutencao
+    RegistroManutencao, RegistroPonto
 )
 
 
