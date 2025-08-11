@@ -21,10 +21,10 @@ router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
 
 # Todas as URLs da API começam aqui, sem o prefixo 'api/'
 urlpatterns = [
-    # Rotas do Router
+    # Rotas do Router são incluídas automaticamente pelo *router.urls
     *router.urls,
 
-    # Rotas Manuais (agora sem 'api/')
+    # Rotas Manuais
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
@@ -35,7 +35,4 @@ urlpatterns = [
     path('reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
     path('meus-eventos/', views.MeusEventosView.as_view(), name='meus-eventos'),
     path('reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),
-    
-    # Rota de debug (pode ser removida depois)
-    path('debug-urls/', views.list_all_urls, name='debug-urls'),
 ]
