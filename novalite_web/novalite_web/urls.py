@@ -26,6 +26,9 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    
+    path('api/debug-urls/', views.list_all_urls, name='debug-urls'),
+
     path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),

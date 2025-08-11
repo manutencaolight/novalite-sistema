@@ -18,6 +18,8 @@ from .serializers import MyTokenObtainPairSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import JsonResponse # Adicione esta importação no topo se não existir
 from rest_framework.views import APIView
+from django.urls import get_resolver
+
 
 # Imports do ReportLab
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
@@ -1138,5 +1140,23 @@ class MeusEventosView(APIView):
                 'registros_ponto': registros_serializer.data
             })
         except Funcionario.DoesNotExist:
-            return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)    
+            return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([AllowAny]) # Aberto para qualquer um, para facilitar o teste
+def list_all_urls(request):
+    """
+    Uma view de debug que lista todas as rotas registradas no projeto.
+    """
+    url_patterns = get_resolver().url_patterns
+    url_list = []
+    for pattern in url_patterns:
+        # Para rotas incluídas (como o router da API), exploramos seus padrões
+        if hasattr(pattern, 'url_patterns'):
+            for sub_pattern in pattern.url_patterns:
+                url_list.append(str(sub_pattern.pattern))
+        else:
+            url_list.append(str(pattern.pattern))
+    
+    return Response({"registered_urls": url_list})        
 
