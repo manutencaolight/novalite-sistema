@@ -176,3 +176,16 @@ class RegistroManutencaoAdmin(ImportExportModelAdmin): # <-- ATUALIZADO
     list_filter = ('status', 'data_entrada')
     search_fields = ('os_number', 'equipamento__modelo', 'descricao_problema')
     readonly_fields = ('os_number', 'data_entrada', 'data_saida')
+
+# --- NOVO ADMIN ADICIONADO ---
+@admin.register(RegistroPonto)
+class RegistroPontoAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'data_hora_entrada', 'data_hora_saida', 'duracao', 'status')
+    list_filter = ('evento', 'funcionario', 'status', 'data_hora_entrada')
+    search_fields = ('funcionario__nome', 'evento__nome')
+    # Torna os campos não editáveis no admin, pois eles são controlados pelo app
+    readonly_fields = ('evento', 'funcionario', 'data_hora_entrada', 'data_hora_saida', 'status')
+
+    def has_add_permission(self, request):
+        # Impede a criação de novos registros de ponto manualmente pelo admin
+        return False    
