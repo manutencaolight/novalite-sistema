@@ -1,9 +1,7 @@
-// Em: src/TeamManagement.js
-
 import React, { useState, useEffect } from 'react';
 import {
     Box, Typography, FormControl, InputLabel, Select,
-    MenuItem, OutlinedInput, Chip, Button
+    MenuItem, OutlinedInput, Chip, Button, Paper // --- 'Paper' ADICIONADO AQUI ---
 } from '@mui/material';
 import { authFetch } from './api';
 
@@ -87,6 +85,4 @@ function TeamManagement({ evento, onTeamUpdate }) {
     );
 }
 
-// Adicione esta importação no topo do seu EventDetail.js
-// import TeamManagement from './TeamManagement';
 export default TeamManagement;
