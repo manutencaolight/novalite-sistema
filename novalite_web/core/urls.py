@@ -33,6 +33,6 @@ urlpatterns = [
     path('reports/evento/<int:evento_id>/', views.evento_report_pdf, name='evento_report_pdf'),
     path('reports/guia-saida/<int:evento_id>/', views.gerar_guia_saida_pdf, name='gerar_guia_saida_pdf'),
     path('reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
-    path('meus-eventos/', views.MeusEventosView.as_view(), name='meus-eventos'),
+    path('ponto/meus-dados/', views.MeusEventosView.as_view(), name='meus-eventos'),
     path('reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),
 ]

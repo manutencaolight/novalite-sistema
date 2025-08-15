@@ -19,12 +19,12 @@ function PontoPage() {
 
     const fetchData = useCallback(() => {
         if (user) {
-            authFetch('/meus-eventos/')
+            // --- CHAMADA ATUALIZADA PARA A NOVA ROTA ---
+            authFetch('/ponto/meus-dados/')
                 .then(res => res.ok ? res.json() : Promise.reject('Falha ao buscar seus eventos.'))
                 .then(data => {
                     setMeusEventos(data.eventos || []);
                     setRegistrosPonto(data.registros_ponto || []);
-                    // Seleciona o evento mais recente por padrão, se houver
                     if (data.eventos && data.eventos.length > 0) {
                         setSelectedEventoId(data.eventos[0].id);
                     }
