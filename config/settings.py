@@ -40,8 +40,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'novalite_web.urls'
-WSGI_APPLICATION = 'novalite_web.wsgi.application'
+ROOT_URLCONF = 'config.urls' # Alterado de 'novalite_web.urls'
+WSGI_APPLICATION = 'config.wsgi.application' # Alterado de 'novalite_web.wsgi.application'
 
 TEMPLATES = [
     {
