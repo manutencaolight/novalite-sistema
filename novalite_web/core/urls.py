@@ -1,4 +1,4 @@
-# Em: core/urls.py (NOVO ARQUIVO)
+# Em: core/urls.py (Versão com a rota corrigida)
 
 from django.urls import path
 from rest_framework import routers
@@ -19,13 +19,8 @@ router.register(r'manutencao-historico', views.RegistroManutencaoHistoryViewSet,
 router.register(r'consumiveis', views.ConsumivelViewSet)
 router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
 
-# Todas as URLs da API começam aqui, sem o prefixo 'api/'
 urlpatterns = [
-    # Rotas do Router são incluídas automaticamente pelo *router.urls
     *router.urls,
-
-    # Rotas Manuais
-    path('debug-urls/', views.list_all_urls, name='debug-urls'),
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),
@@ -34,6 +29,9 @@ urlpatterns = [
     path('reports/evento/<int:evento_id>/', views.evento_report_pdf, name='evento_report_pdf'),
     path('reports/guia-saida/<int:evento_id>/', views.gerar_guia_saida_pdf, name='gerar_guia_saida_pdf'),
     path('reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
+    
+    # --- ROTA CORRIGIDA CONFORME SUA SOLICITAÇÃO ---
     path('ponto/meus-dados/', views.MeusEventosView.as_view(), name='meus-eventos'),
+    
     path('reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),
 ]

@@ -1,4 +1,4 @@
-// Em: src/PontoPage.js
+// Em: src/PontoPage.js (Versão com a chamada da API corrigida)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -19,7 +19,7 @@ function PontoPage() {
 
     const fetchData = useCallback(() => {
         if (user) {
-            // --- CHAMADA ATUALIZADA PARA A NOVA ROTA ---
+            // --- CHAMADA ATUALIZADA PARA A ROTA CORRETA ---
             authFetch('/ponto/meus-dados/')
                 .then(res => res.ok ? res.json() : Promise.reject('Falha ao buscar seus eventos.'))
                 .then(data => {
@@ -37,6 +37,7 @@ function PontoPage() {
         fetchData();
     }, [fetchData]);
 
+    // ... o resto do seu componente não precisa de alterações ...
     const handlePontoAction = (action) => {
         setError('');
         setSuccess('');
