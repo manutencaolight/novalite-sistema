@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (NOVO ARQUIVO)
+// Em: src/TeamManagementPage.js (Versão Final e Corrigida)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -37,11 +37,10 @@ function TeamManagementPage() {
         }
     }, [user]);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-
+    useEffect(() => { fetchData(); }, [fetchData]);
+    
     const handleSelectEvento = (eventoId) => {
+        // Busca a versão mais recente do evento para garantir dados atualizados
         authFetch(`/eventos/${eventoId}/`)
             .then(res => res.json())
             .then(data => setSelectedEvento(data));
@@ -57,7 +56,7 @@ function TeamManagementPage() {
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
         .then(() => {
-            handleSelectEvento(eventoId); // Atualiza os dados do evento
+            handleSelectEvento(eventoId);
             setSelectedFuncionarioId(''); 
         })
         .catch(err => setError(err.error || `Ocorreu um erro.`));

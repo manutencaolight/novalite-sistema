@@ -1,4 +1,4 @@
-// Em: src/PontoPage.js (Versão com Lista de Eventos Automática)
+// Em: src/PontoPage.js (Versão Final para Confirmação de Presença)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -11,15 +11,15 @@ import { useAuth } from './AuthContext';
 function PontoPage() {
     const { user } = useAuth();
     const [meusEventos, setMeusEventos] = useState([]);
-    const [registrosPonto, setRegistrosPonto] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [funcionarioId, setFuncionarioId] = useState(null);
 
     const fetchData = useCallback(() => {
         if (user) {
             setLoading(true);
-            authFetch('/ponto/meus-dados/') // Usando a rota que sabemos que funciona
+            authFetch('/ponto/meus-dados/')
                 .then(res => {
                     if (!res.ok) {
                         return res.json().then(err => Promise.reject(err.error || 'Falha ao buscar seus eventos.'));
@@ -28,7 +28,11 @@ function PontoPage() {
                 })
                 .then(data => {
                     setMeusEventos(data.eventos || []);
-                    setRegistrosPonto(data.registros_ponto || []);
+                    // Armazena o ID do funcionário logado para facilitar as verificações
+                    if (data.eventos.length > 0 && data.eventos[0].equipe.length > 0) {
+                        const self = data.eventos[0].equipe.find(f => f.email === user.email);
+                        if (self) setFuncionarioId(self.id);
+                    }
                 })
                 .catch(err => setError(err.message || err))
                 .finally(() => setLoading(false));
@@ -39,17 +43,16 @@ function PontoPage() {
         fetchData();
     }, [fetchData]);
 
-    const handlePontoAction = (action, eventoId) => {
+    const handleMemberConfirm = (eventoId) => {
         setError('');
         setSuccess('');
-        
-        authFetch(`/eventos/${eventoId}/${action}/`, { method: 'POST' })
+        authFetch(`/eventos/${eventoId}/member-confirm/`, { method: 'POST' })
             .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
             .then(data => {
                 setSuccess(data.status);
-                fetchData(); // Atualiza a lista de eventos e registros após a ação
+                fetchData(); // Atualiza a lista para refletir a confirmação
             })
-            .catch(err => setError(err.error || 'Ocorreu um erro ao registrar o ponto.'));
+            .catch(err => setError(err.error || 'Ocorreu um erro ao confirmar a presença.'));
     };
     
     if (loading) {
@@ -60,7 +63,7 @@ function PontoPage() {
         <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
             <Paper sx={{ p: 3 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
-                    Meus Eventos e Ponto
+                    Confirmar Presença nos Eventos
                 </Typography>
                 
                 {error && <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>}
@@ -68,42 +71,37 @@ function PontoPage() {
 
                 <List>
                     {meusEventos.length > 0 ? meusEventos.map((evento, index) => {
-                        // Para cada evento, verifica se há um ponto em aberto
-                        const pontoAberto = registrosPonto.find(r => r.evento === evento.id && r.status === 'PRESENTE');
-                        
+                        const confirmacao = evento.confirmacoes_presenca.find(c => c.funcionario === funcionarioId);
+                        const isConfirmedByMember = confirmacao?.confirmado_pelo_membro;
+                        const isConfirmedByLeader = confirmacao?.confirmado_pelo_lider;
+
                         return (
                             <React.Fragment key={evento.id}>
                                 <ListItem>
                                     <ListItemText
                                         primary={evento.nome || "Evento Sem Nome"}
-                                        secondary={`Data: ${new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}`}
-                                    />
-                                    <Box sx={{ textAlign: 'right' }}>
-                                        {pontoAberto ? (
-                                            <>
-                                                <Typography variant="caption" color="primary" display="block">
-                                                    Entrada em: {new Date(pontoAberto.data_hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                        secondary={
+                                            <Box component="span">
+                                                <Typography component="span" display="block" variant="body2">
+                                                    Data: {new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}
                                                 </Typography>
-                                                <Button
-                                                    variant="contained"
-                                                    color="error"
-                                                    size="small"
-                                                    onClick={() => handlePontoAction('clock-out', evento.id)}
-                                                >
-                                                    Registrar Saída
-                                                </Button>
-                                            </>
-                                        ) : (
-                                            <Button
-                                                variant="contained"
-                                                color="success"
-                                                size="small"
-                                                onClick={() => handlePontoAction('clock-in', evento.id)}
-                                            >
-                                                Registrar Entrada
-                                            </Button>
-                                        )}
-                                    </Box>
+                                                {isConfirmedByLeader && 
+                                                    <Typography component="span" variant="caption" color="success.main">
+                                                        Presença confirmada pelo líder.
+                                                    </Typography>
+                                                }
+                                            </Box>
+                                        }
+                                    />
+                                    <Button
+                                        variant={isConfirmedByMember ? "outlined" : "contained"}
+                                        color="success"
+                                        size="small"
+                                        onClick={() => handleMemberConfirm(evento.id)}
+                                        disabled={isConfirmedByMember}
+                                    >
+                                        {isConfirmedByMember ? "Presença Confirmada" : "Confirmar Minha Presença"}
+                                    </Button>
                                 </ListItem>
                                 {index < meusEventos.length - 1 && <Divider />}
                             </React.Fragment>
