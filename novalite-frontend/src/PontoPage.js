@@ -1,10 +1,9 @@
-// Em: src/PontoPage.js (Versão com a chamada da API corrigida)
+// Em: src/PontoPage.js (Versão com Lista de Eventos Automática)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Container, Typography, Box, Paper, Button,
-    Select, MenuItem, FormControl, InputLabel,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Alert
+    List, ListItem, ListItemText, Divider, Alert, CircularProgress
 } from '@mui/material';
 import { authFetch } from './api';
 import { useAuth } from './AuthContext';
@@ -13,23 +12,26 @@ function PontoPage() {
     const { user } = useAuth();
     const [meusEventos, setMeusEventos] = useState([]);
     const [registrosPonto, setRegistrosPonto] = useState([]);
-    const [selectedEventoId, setSelectedEventoId] = useState('');
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     const fetchData = useCallback(() => {
         if (user) {
-            // --- CHAMADA ATUALIZADA PARA A ROTA CORRETA ---
-            authFetch('/ponto/meus-dados/')
-                .then(res => res.ok ? res.json() : Promise.reject('Falha ao buscar seus eventos.'))
+            setLoading(true);
+            authFetch('/ponto/meus-dados/') // Usando a rota que sabemos que funciona
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(err => Promise.reject(err.error || 'Falha ao buscar seus eventos.'));
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     setMeusEventos(data.eventos || []);
                     setRegistrosPonto(data.registros_ponto || []);
-                    if (data.eventos && data.eventos.length > 0) {
-                        setSelectedEventoId(data.eventos[0].id);
-                    }
                 })
-                .catch(err => setError(err.message || err));
+                .catch(err => setError(err.message || err))
+                .finally(() => setLoading(false));
         }
     }, [user]);
 
@@ -37,111 +39,81 @@ function PontoPage() {
         fetchData();
     }, [fetchData]);
 
-    // ... o resto do seu componente não precisa de alterações ...
-    const handlePontoAction = (action) => {
+    const handlePontoAction = (action, eventoId) => {
         setError('');
         setSuccess('');
-        if (!selectedEventoId) {
-            setError('Por favor, selecione um evento.');
-            return;
-        }
-
-        authFetch(`/eventos/${selectedEventoId}/${action}/`, { method: 'POST' })
+        
+        authFetch(`/eventos/${eventoId}/${action}/`, { method: 'POST' })
             .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
             .then(data => {
                 setSuccess(data.status);
-                fetchData(); // Atualiza os dados após a ação
+                fetchData(); // Atualiza a lista de eventos e registros após a ação
             })
-            .catch(err => setError(err.error || 'Ocorreu um erro.'));
+            .catch(err => setError(err.error || 'Ocorreu um erro ao registrar o ponto.'));
     };
-
-    const eventoAtual = meusEventos.find(e => e.id === selectedEventoId);
-    const pontoAberto = registrosPonto.find(r => r.evento === selectedEventoId && r.status === 'PRESENTE');
-    const registrosDoEvento = registrosPonto.filter(r => r.evento === selectedEventoId);
+    
+    if (loading) {
+        return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
+    }
 
     return (
         <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
             <Paper sx={{ p: 3 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
-                    Registro de Ponto
+                    Meus Eventos e Ponto
                 </Typography>
                 
-                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+                {error && <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>}
+                {success && <Alert severity="success" sx={{ my: 2 }}>{success}</Alert>}
 
-                <FormControl fullWidth sx={{ my: 2 }}>
-                    <InputLabel>Selecione o Evento</InputLabel>
-                    <Select value={selectedEventoId} label="Selecione o Evento" onChange={e => setSelectedEventoId(e.target.value)}>
-                        {(meusEventos || []).map(evento => (
-                            <MenuItem key={evento.id} value={evento.id}>
-                                {evento.nome || `Evento em ${new Date(evento.data_evento).toLocaleDateString()}`}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-                {eventoAtual && (
-                    <Box sx={{ p: 2, border: '1px solid #ddd', borderRadius: 1, textAlign: 'center' }}>
-                        {pontoAberto ? (
-                            <>
-                                <Typography variant="h6" color="primary">
-                                    Você está trabalhando neste evento.
-                                </Typography>
-                                <Typography>
-                                    Entrada registrada em: {new Date(pontoAberto.data_hora_entrada).toLocaleString('pt-BR')}
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="error"
-                                    sx={{ mt: 2 }}
-                                    onClick={() => handlePontoAction('clock-out')}
-                                >
-                                    Registrar Saída
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <Typography variant="h6">
-                                    Pronto para começar?
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    sx={{ mt: 2 }}
-                                    onClick={() => handlePontoAction('clock-in')}
-                                >
-                                    Registrar Entrada
-                                </Button>
-                            </>
-                        )}
-                    </Box>
-                )}
-
-                {registrosDoEvento.length > 0 && (
-                    <Box sx={{ mt: 4 }}>
-                        <Typography variant="h5" gutterBottom>Seus Registros para este Evento</Typography>
-                        <TableContainer component={Paper}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Entrada</TableCell>
-                                        <TableCell>Saída</TableCell>
-                                        <TableCell>Duração</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {registrosDoEvento.map(reg => (
-                                        <TableRow key={reg.id}>
-                                            <TableCell>{new Date(reg.data_hora_entrada).toLocaleString('pt-BR')}</TableCell>
-                                            <TableCell>{reg.data_hora_saida ? new Date(reg.data_hora_saida).toLocaleString('pt-BR') : '---'}</TableCell>
-                                            <TableCell>{reg.duracao}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Box>
-                )}
+                <List>
+                    {meusEventos.length > 0 ? meusEventos.map((evento, index) => {
+                        // Para cada evento, verifica se há um ponto em aberto
+                        const pontoAberto = registrosPonto.find(r => r.evento === evento.id && r.status === 'PRESENTE');
+                        
+                        return (
+                            <React.Fragment key={evento.id}>
+                                <ListItem>
+                                    <ListItemText
+                                        primary={evento.nome || "Evento Sem Nome"}
+                                        secondary={`Data: ${new Date(evento.data_evento.replace(/-/g, '/')).toLocaleDateString('pt-BR')}`}
+                                    />
+                                    <Box sx={{ textAlign: 'right' }}>
+                                        {pontoAberto ? (
+                                            <>
+                                                <Typography variant="caption" color="primary" display="block">
+                                                    Entrada em: {new Date(pontoAberto.data_hora_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                </Typography>
+                                                <Button
+                                                    variant="contained"
+                                                    color="error"
+                                                    size="small"
+                                                    onClick={() => handlePontoAction('clock-out', evento.id)}
+                                                >
+                                                    Registrar Saída
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <Button
+                                                variant="contained"
+                                                color="success"
+                                                size="small"
+                                                onClick={() => handlePontoAction('clock-in', evento.id)}
+                                            >
+                                                Registrar Entrada
+                                            </Button>
+                                        )}
+                                    </Box>
+                                </ListItem>
+                                {index < meusEventos.length - 1 && <Divider />}
+                            </React.Fragment>
+                        );
+                    }) : (
+                        <Typography sx={{ p: 2, textAlign: 'center' }}>
+                            Você não foi designado para nenhum evento no momento.
+                        </Typography>
+                    )}
+                </List>
             </Paper>
         </Container>
     );
