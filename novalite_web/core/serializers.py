@@ -1,14 +1,13 @@
-# Em: core/serializers.py (Versão com a sintaxe corrigida)
+# Em: core/serializers.py (Versão Final e Corrigida)
 
 from rest_framework import serializers
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, RegistroPonto, HistoricoManutencao
+    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, 
+    ConfirmacaoPresenca, HistoricoManutencao # --- MODELOS ATUALIZADOS ---
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-# --- Serializers Básicos (Definidos Primeiro) ---
 
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,9 +34,10 @@ class FotoPreEventoSerializer(serializers.ModelSerializer):
         model = FotoPreEvento
         fields = '__all__'        
 
-
 class ConsumivelSerializer(serializers.ModelSerializer):
-    class Meta: model = Consumivel; fields = '__all__'
+    class Meta:
+        model = Consumivel
+        fields = '__all__'
 
 class ConsumivelEventoSerializer(serializers.ModelSerializer):
     consumivel = ConsumivelSerializer(read_only=True)
@@ -70,7 +70,6 @@ class MaterialEventoSerializer(serializers.ModelSerializer):
         queryset=Equipamento.objects.all(), source='equipamento', write_only=True, required=False, allow_null=True
     )
     itens_retornados = ItemRetornadoSerializer(many=True, read_only=True)
-    
     quantidade_retornada_ok = serializers.IntegerField(read_only=True)
     quantidade_retornada_defeito = serializers.IntegerField(read_only=True)
 
@@ -98,7 +97,23 @@ class UsuarioSimpleSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ['id', 'username']
 
-# --- Serializer Principal de Evento ---
+# --- NOVO SERIALIZER PARA O HISTÓRICO DETALHADO ---
+class HistoricoManutencaoSerializer(serializers.ModelSerializer):
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
+    class Meta:
+        model = HistoricoManutencao
+        fields = ['id', 'data_atualizacao', 'status_anterior', 'status_novo', 'observacao', 'usuario_nome']
+
+# --- NOVO SERIALIZER PARA A CONFIRMAÇÃO DE PRESENÇA ---
+class ConfirmacaoPresencaSerializer(serializers.ModelSerializer):
+    funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
+    presenca_confirmada = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = ConfirmacaoPresenca
+        fields = ['id', 'evento', 'funcionario', 'funcionario_nome', 
+                  'confirmado_pelo_lider', 'confirmado_pelo_membro', 
+                  'data_confirmacao_lider', 'data_confirmacao_membro', 'presenca_confirmada']
+
 class EventoSerializer(serializers.ModelSerializer):
     cliente = ClienteSerializer(read_only=True)
     equipe = FuncionarioSerializer(many=True, read_only=True)
@@ -108,6 +123,8 @@ class EventoSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     criado_por = UsuarioSimpleSerializer(read_only=True)
     tem_avarias = serializers.SerializerMethodField()
+    chefe_de_equipe = FuncionarioSerializer(read_only=True)
+    confirmacoes_presenca = ConfirmacaoPresencaSerializer(many=True, read_only=True)
     
     cliente_id = serializers.PrimaryKeyRelatedField(
         queryset=Cliente.objects.all(), source='cliente', write_only=True, required=True
@@ -119,30 +136,19 @@ class EventoSerializer(serializers.ModelSerializer):
             'cliente', 'cliente_id', 'responsavel_local_nome', 'responsavel_local_contato', 
             'data_montagem', 'data_evento', 'data_termino', 'modificado_em', 
             'observacao_correcao', 'motivo_cancelamento', 'equipe', 'veiculos', 
+            'chefe_de_equipe', 'confirmacoes_presenca',
             'materialevento_set', 'consumiveis_set', 'criado_por', 'tem_avarias'
         ]
 
     def get_tem_avarias(self, obj):
         return ItemRetornado.objects.filter(material_evento__evento=obj).exclude(condicao='OK').exists()
 
-
-# --- Crie este novo serializer ---
-class HistoricoManutencaoSerializer(serializers.ModelSerializer):
-    usuario_nome = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
-    class Meta:
-        model = HistoricoManutencao
-        fields = ['id', 'data_atualizacao', 'status_anterior', 'status_novo', 'observacao', 'usuario_nome']
-
-
 class RegistroManutencaoSerializer(serializers.ModelSerializer):
     equipamento = EquipamentoSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    # --- CAMPO ADICIONADO PARA INCLUIR O HISTÓRICO ---
     historico_detalhado = HistoricoManutencaoSerializer(many=True, read_only=True)
-
     class Meta:
         model = RegistroManutencao
-        # --- ATUALIZE OS FIELDS PARA INCLUIR O NOVO CAMPO ---
         fields = ['id', 'os_number', 'equipamento', 'status', 'status_display',
                   'descricao_problema', 'solucao_aplicada', 'data_entrada',
                   'data_saida', 'historico_detalhado']
@@ -185,11 +191,4 @@ class AditivoOperacaoSerializer(serializers.ModelSerializer):
             MaterialAditivo.objects.create(aditivo=aditivo, **material_data)
         return aditivo
 
-class RegistroPontoSerializer(serializers.ModelSerializer):
-    duracao = serializers.CharField(read_only=True)
-    evento_nome = serializers.CharField(source='evento.nome', read_only=True)
-    funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
-
-    class Meta:
-        model = RegistroPonto
-        fields = ['id', 'evento', 'evento_nome', 'funcionario', 'funcionario_nome', 'data_hora_entrada', 'data_hora_saida', 'status', 'duracao']
+# --- REMOVIDO O 'RegistroPontoSerializer' ---

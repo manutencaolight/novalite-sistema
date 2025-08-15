@@ -32,13 +32,14 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, RegistroPonto, HistoricoManutencao
+    Consumivel, ConsumivelEvento, AditivoOperacao, ConfirmacaoPresenca, HistoricoManutencao
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer,
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
-    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer, RegistroPontoSerializer
+    UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer,
+    MyTokenObtainPairSerializer # Removido o serializer do RegistroPonto
 )
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -639,6 +640,54 @@ class EventoViewSet(viewsets.ModelViewSet):
         evento.save()
 
         return Response({'status': 'Operação cancelada com sucesso!'})
+
+    @action(detail=True, methods=['post'], url_path='set-leader')
+    def set_chefe_de_equipe(self, request, pk=None):
+        evento = self.get_object()
+        funcionario_id = request.data.get('funcionario_id')
+        if not funcionario_id:
+            return Response({'error': 'ID do funcionário é obrigatório.'}, status=400)
+        try:
+            chefe = Funcionario.objects.get(id=funcionario_id)
+            evento.equipe.add(chefe)
+            evento.chefe_de_equipe = chefe
+            evento.save()
+            return Response({'status': f'{chefe.nome} definido como Chefe de Equipe.'})
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Funcionário não encontrado.'}, status=404)
+
+    @action(detail=True, methods=['post'], url_path='leader-confirm')
+    def leader_confirm_presence(self, request, pk=None):
+        evento = self.get_object()
+        membros_presentes_ids = request.data.get('membros_ids', [])
+        for func_id in membros_presentes_ids:
+            confirmacao, _ = ConfirmacaoPresenca.objects.get_or_create(evento=evento, funcionario_id=func_id)
+            if not confirmacao.confirmado_pelo_lider:
+                confirmacao.confirmado_pelo_lider = True
+                confirmacao.data_confirmacao_lider = timezone.now()
+                confirmacao.save()
+        membros_da_equipe = evento.equipe.all()
+        for membro in membros_da_equipe:
+            if membro.id not in membros_presentes_ids:
+                ConfirmacaoPresenca.objects.filter(evento=evento, funcionario=membro).update(
+                    confirmado_pelo_lider=False, data_confirmacao_lider=None
+                )
+        return Response({'status': 'Lista de presença do líder atualizada.'})
+
+    @action(detail=True, methods=['post'], url_path='member-confirm')
+    def member_confirm_presence(self, request, pk=None):
+        evento = self.get_object()
+        try:
+            funcionario = Funcionario.objects.get(email=request.user.email)
+            confirmacao, _ = ConfirmacaoPresenca.objects.get_or_create(evento=evento, funcionario=funcionario)
+            if not confirmacao.confirmado_pelo_membro:
+                confirmacao.confirmado_pelo_membro = True
+                confirmacao.data_confirmacao_membro = timezone.now()
+                confirmacao.save()
+            return Response({'status': 'Sua presença foi confirmada com sucesso!'})
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)
+    
     @action(detail=True, methods=['post'], url_path='clock-in')
     @transaction.atomic
     def clock_in(self, request, pk=None):
@@ -1138,6 +1187,7 @@ def gerar_guia_reforco_pdf(request, evento_id):
         return response
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
 
 
 class MeusEventosView(APIView):

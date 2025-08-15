@@ -4,10 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
     Container, Typography, Box, Paper, Grid, List, ListItemButton,
     ListItemText, Divider, CircularProgress, Alert, FormControl,
-    InputLabel, Select, MenuItem, Button, ListItem, IconButton
+    InputLabel, Select, MenuItem, Button, ListItem, IconButton, Tooltip
 } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
+import StarIcon from '@mui/icons-material/Star';
 import { authFetch } from './api';
 import { useAuth } from './AuthContext';
 
@@ -20,7 +21,6 @@ function TeamManagementPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Busca todos os eventos e todos os funcionários de uma só vez
     const fetchData = useCallback(() => {
         if (user) {
             setLoading(true);
@@ -41,15 +41,12 @@ function TeamManagementPage() {
         fetchData();
     }, [fetchData]);
 
-    // Função para buscar os detalhes de um evento selecionado
     const handleSelectEvento = (eventoId) => {
-        const eventoCompleto = eventos.find(e => e.id === eventoId);
-        // Para otimizar, podemos buscar os detalhes completos se necessário
-        // Por enquanto, usamos os dados já carregados
-        setSelectedEvento(eventoCompleto);
+        authFetch(`/eventos/${eventoId}/`)
+            .then(res => res.json())
+            .then(data => setSelectedEvento(data));
     };
 
-    // Ação de adicionar/remover e atualizar a lista de eventos
     const handleTeamAction = (action, eventoId, funcionarioId) => {
         if (!funcionarioId) return;
         setError('');
@@ -60,15 +57,20 @@ function TeamManagementPage() {
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
         .then(() => {
-            // Atualiza os dados do evento modificado
-            authFetch(`/eventos/${eventoId}/`).then(res => res.json()).then(updatedEvento => {
-                setSelectedEvento(updatedEvento);
-                // Atualiza a lista principal de eventos para manter a consistência
-                setEventos(prevEventos => prevEventos.map(e => e.id === eventoId ? updatedEvento : e));
-            });
-            setSelectedFuncionarioId(''); // Limpa o seletor
+            handleSelectEvento(eventoId); // Atualiza os dados do evento
+            setSelectedFuncionarioId(''); 
         })
-        .catch(err => setError(err.error || `Ocorreu um erro ao ${action === 'add-member' ? 'adicionar' : 'remover'}.`));
+        .catch(err => setError(err.error || `Ocorreu um erro.`));
+    };
+    
+    const handleSetLeader = (eventoId, funcionarioId) => {
+        authFetch(`/eventos/${eventoId}/set-leader/`, {
+            method: 'POST',
+            body: JSON.stringify({ funcionario_id: funcionarioId }),
+        })
+        .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
+        .then(() => handleSelectEvento(eventoId))
+        .catch(err => setError(err.error || 'Erro ao definir líder.'));
     };
 
     if (loading) {
@@ -87,7 +89,6 @@ function TeamManagementPage() {
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             <Grid container spacing={3}>
-                {/* Coluna da Esquerda: Lista de Eventos */}
                 <Grid item xs={12} md={5}>
                     <Paper sx={{ p: 2, height: '70vh', overflow: 'auto' }}>
                         <Typography variant="h6">Selecione uma Operação</Typography>
@@ -108,7 +109,6 @@ function TeamManagementPage() {
                     </Paper>
                 </Grid>
 
-                {/* Coluna da Direita: Gerenciamento da Equipe */}
                 <Grid item xs={12} md={7}>
                     <Paper sx={{ p: 2, height: '70vh', overflow: 'auto' }}>
                         {selectedEvento ? (
@@ -142,9 +142,18 @@ function TeamManagementPage() {
                                         <ListItem
                                             key={membro.id}
                                             secondaryAction={
-                                                <IconButton edge="end" onClick={() => handleTeamAction('remove-member', selectedEvento.id, membro.id)}>
-                                                    <DeleteIcon color="error" />
-                                                </IconButton>
+                                                <Box>
+                                                    <Tooltip title="Definir como Chefe de Equipe">
+                                                        <IconButton edge="end" onClick={() => handleSetLeader(selectedEvento.id, membro.id)}>
+                                                            <StarIcon color={selectedEvento.chefe_de_equipe?.id === membro.id ? "warning" : "inherit"} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Remover da Equipe">
+                                                        <IconButton edge="end" onClick={() => handleTeamAction('remove-member', selectedEvento.id, membro.id)}>
+                                                            <DeleteIcon color="error" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
                                             }
                                         >
                                             <ListItemText primary={membro.nome} secondary={membro.funcao} />

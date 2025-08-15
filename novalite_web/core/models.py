@@ -1,4 +1,4 @@
-# Em: core/models.py (Versão Corrigida e Final)
+# Em: core/models.py (Versão Final com Confirmação de Presença)
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
@@ -140,6 +140,14 @@ class Evento(models.Model):
     motivo_cancelamento = models.TextField(blank=True, null=True, verbose_name="Motivo do Cancelamento")
     equipe = models.ManyToManyField('Funcionario', blank=True, related_name="eventos")
     veiculos = models.ManyToManyField('Veiculo', blank=True, related_name="eventos")
+    chefe_de_equipe = models.ForeignKey(
+        'Funcionario',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos_liderados",
+        verbose_name="Chefe de Equipe"
+    )
     criado_por = models.ForeignKey(
         'Usuario', 
         on_delete=models.SET_NULL, 
@@ -221,7 +229,7 @@ class RegistroManutencao(models.Model):
         verbose_name="Número da O.S."
     )
     STATUS_MANUTENCAO = (('AGUARDANDO_AVALIACAO', 'Aguardando Avaliação'), ('EM_REPARO', 'Em Reparo'), ('AGUARDANDO_PECAS', 'Aguardando Peças'), ('REPARADO', 'Reparado / Pronto para Estoque'))
-    equipamento = models.ForeignKey('Equipamento', related_name='historico_manutencao', on_delete=models.CASCADE)
+    equipamento = models.ForeignKey('Equipamento', on_delete=models.CASCADE)
     item_retornado = models.OneToOneField('ItemRetornado', on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=30, choices=STATUS_MANUTENCAO, default='AGUARDANDO_AVALIACAO')
     descricao_problema = models.TextField()
@@ -277,31 +285,22 @@ class MaterialAditivo(models.Model):
     def __str__(self):
         return f"{self.quantidade}x {self.equipamento.modelo}"    
 
-class RegistroPonto(models.Model):
-    STATUS_CHOICES = (
-        ('PRESENTE', 'Presente'),
-        ('FINALIZADO', 'Finalizado'),
-    )
-    evento = models.ForeignKey('Evento', on_delete=models.CASCADE, related_name="registros_ponto")
-    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE, related_name="registros_ponto")
-    data_hora_entrada = models.DateTimeField(auto_now_add=True, verbose_name="Entrada")
-    data_hora_saida = models.DateTimeField(null=True, blank=True, verbose_name="Saída")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PRESENTE')
+class ConfirmacaoPresenca(models.Model):
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE, related_name="confirmacoes_presenca")
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE, related_name="confirmacoes_presenca")
+    confirmado_pelo_lider = models.BooleanField(default=False, verbose_name="Confirmado pelo Líder")
+    confirmado_pelo_membro = models.BooleanField(default=False, verbose_name="Confirmado pelo Membro")
+    data_confirmacao_lider = models.DateTimeField(null=True, blank=True)
+    data_confirmacao_membro = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "Registro de Ponto"
-        verbose_name_plural = "Registros de Ponto"
-        ordering = ['-data_hora_entrada']
+        verbose_name = "Confirmação de Presença"
+        verbose_name_plural = "Confirmações de Presença"
+        unique_together = ('evento', 'funcionario') # Garante um registro por pessoa por evento
 
     def __str__(self):
-        return f"Ponto de {self.funcionario.nome} em {self.evento.nome}"
+        return f"Presença de {self.funcionario.nome} em {self.evento.nome}"
 
     @property
-    def duracao(self):
-        if self.data_hora_saida and self.data_hora_entrada:
-            delta = self.data_hora_saida - self.data_hora_entrada
-            total_seconds = int(delta.total_seconds())
-            hours, remainder = divmod(total_seconds, 3600)
-            minutes, _ = divmod(remainder, 60)
-            return f"{hours:02d}:{minutes:02d}"
-        return "Em andamento"
+    def presenca_confirmada(self):
+        return self.confirmado_pelo_lider and self.confirmado_pelo_membro

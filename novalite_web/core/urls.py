@@ -31,6 +31,7 @@ urlpatterns = [
     path('reports/avarias/<int:evento_id>/', views.gerar_relatorio_avarias_pdf, name='gerar_relatorio_avarias_pdf'),
     
     # --- ROTA CORRIGIDA CONFORME SUA SOLICITAÇÃO ---
+    path('lider/meus-eventos/', views.LiderEventosView.as_view(), name='lider-meus-eventos'),
     path('ponto/meus-dados/', views.MeusEventosView.as_view(), name='meus-eventos'),
     
     path('reports/evento/<int:evento_id>/guia-reforco/', views.gerar_guia_reforco_pdf, name='gerar_guia_reforco_pdf'),

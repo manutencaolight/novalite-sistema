@@ -1,6 +1,6 @@
-// Em: src/App.js (Versão Final com Gestão de Equipes)
+// Em: src/App.js (Versão com Gestão de Equipes)
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 import { Routes, Route, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
@@ -15,7 +15,8 @@ import ChecklistIcon from '@mui/icons-material/Checklist';
 import ComputerIcon from '@mui/icons-material/Computer';
 import BuildIcon from '@mui/icons-material/Build';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import GroupsIcon from '@mui/icons-material/Groups'; // --- ÍCONE ADICIONADO ---
+import GroupsIcon from '@mui/icons-material/Groups';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 
 // Componentes de página
 import QuadroDeAviso from './QuadroDeAviso';
@@ -27,10 +28,21 @@ import ConferencePage from './ConferencePage';
 import MaintenanceDashboard from './MaintenanceDashboard';
 import AccessDenied from './AccessDenied';
 import PontoPage from './PontoPage';
-import TeamManagementPage from './TeamManagementPage'; // --- NOVA PÁGINA IMPORTADA ---
+import TeamManagementPage from './TeamManagementPage';
+import LiderPontoPage from './LiderPontoPage';
+import { authFetch } from './api';
 
 function AppLayout() {
     const { user, logout } = useAuth();
+    const [isLeader, setIsLeader] = useState(false);
+
+    useEffect(() => {
+        if (user && user.role !== 'freelancer_ponto') {
+             authFetch('/lider/meus-eventos/').then(res => res.json()).then(data => {
+                if (data.length > 0) setIsLeader(true);
+             });
+        }
+    }, [user]);
     
     // Lógica de navegação exclusiva para freelancers
     if (user.role === 'freelancer_ponto') {
@@ -66,9 +78,11 @@ function AppLayout() {
                     {(user.role === 'admin' || user.role === 'planejamento') && (
                         <>
                             <NavLink to="/eventos"><PostAddIcon sx={{ mr: 1 }} />Listas de Materiais</NavLink>
-                            {/* --- NOVO LINK ADICIONADO AO MENU --- */}
                             <NavLink to="/gestao-equipes"><GroupsIcon sx={{ mr: 1 }} />Gestão de Equipes</NavLink>
                         </>
+                    )}
+                    {isLeader && (
+                        <NavLink to="/lider/ponto"><SupervisorAccountIcon sx={{ mr: 1 }} />Ponto do Líder</NavLink>
                     )}
                     {(user.role === 'admin' || user.role === 'logistica') && (
                         <NavLink to="/logistica"><ChecklistIcon sx={{ mr: 1 }} />Conferência e Retorno</NavLink>
@@ -89,7 +103,7 @@ function AppLayout() {
     );
 }
 
-// Componente de Rota Privada (não precisa de alterações)
+// Componente de Rota Privada
 function PrivateRoute({ children }) {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -107,7 +121,7 @@ function PrivateRoute({ children }) {
     return user ? children : null;
 }
 
-// Componente de Rota por Permissão (não precisa de alterações)
+// Componente de Rota por Permissão
 function RoleBasedRoute({ allowedRoles, children }) {
     const { user } = useAuth();
     if (user && allowedRoles.includes(user.role)) {
@@ -135,10 +149,15 @@ function App() {
             </RoleBasedRoute>
         } />
         
-        {/* --- NOVA ROTA ADICIONADA PARA A PÁGINA DE GESTÃO DE EQUIPES --- */}
         <Route path="gestao-equipes" element={
             <RoleBasedRoute allowedRoles={['admin', 'planejamento']}>
                 <TeamManagementPage />
+            </RoleBasedRoute>
+        } />
+        
+        <Route path="lider/ponto" element={
+            <RoleBasedRoute allowedRoles={['admin', 'planejamento', 'logistica', 'manutencao']}>
+                <LiderPontoPage />
             </RoleBasedRoute>
         } />
         
