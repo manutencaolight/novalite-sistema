@@ -6,7 +6,8 @@ import sys
 
 def main():
     """Run administrative tasks."""
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings') # Alterado de 'novalite_web.settings'
+    # Alterado para apontar para o novo local das configurações
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
