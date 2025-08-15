@@ -1,4 +1,4 @@
-// Em: src/MaintenanceDashboard.js (Versão Final com O.S. e Correção de Auth)
+// Em: src/MaintenanceDashboard.js (Versão Final com Modal de Histórico)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -11,36 +11,39 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { authFetch } from './api';
 import ManageMaintenanceModal from './ManageMaintenanceModal';
 import SendToMaintenanceModal from './SendToMaintenanceModal';
-import { useAuth } from './AuthContext'; // 1. Correção de Auth
+import { useAuth } from './AuthContext';
+import MaintenanceHistoryModal from './MaintenanceHistoryModal'; // 1. IMPORTAÇÃO ADICIONADA
 
 function MaintenanceDashboard() {
-    const { user } = useAuth(); // 2. Correção de Auth
+    const { user } = useAuth();
     const [maintenanceItems, setMaintenanceItems] = useState([]);
     const [historyItems, setHistoryItems] = useState([]);
     
     const [selectedItem, setSelectedItem] = useState(null);
     const [isSendModalOpen, setSendModalOpen] = useState(false);
     const [error, setError] = useState(null);
+    
+    // --- 2. NOVO ESTADO PARA CONTROLAR O MODAL DE HISTÓRICO ---
+    const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
     const fetchData = useCallback(() => {
         setError(null);
-        Promise.all([
-            authFetch('/manutencao/').then(res => res.json()),
-            authFetch('/manutencao-historico/').then(res => res.json())
-        ])
-        .then(([activeData, historyData]) => {
-            setMaintenanceItems(activeData.results || activeData);
-            setHistoryItems(historyData.results || historyData);
-        })
-        .catch(err => setError('Falha ao carregar dados da manutenção.'));
-    }, []);
-
-    // 3. Correção de Auth
-    useEffect(() => {
-        if (user) {
-            fetchData();
+        if (user) { // Garante que o usuário esteja logado antes de buscar
+            Promise.all([
+                authFetch('/manutencao/').then(res => res.json()),
+                authFetch('/manutencao-historico/').then(res => res.json())
+            ])
+            .then(([activeData, historyData]) => {
+                setMaintenanceItems(activeData.results || activeData);
+                setHistoryItems(historyData.results || historyData);
+            })
+            .catch(err => setError('Falha ao carregar dados da manutenção.'));
         }
-    }, [user, fetchData]);
+    }, [user]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData, user]);
 
     const handleSuccess = () => {
         setSelectedItem(null);
@@ -52,6 +55,9 @@ function MaintenanceDashboard() {
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             {selectedItem && <ManageMaintenanceModal item={selectedItem} onClose={() => setSelectedItem(null)} onSuccess={handleSuccess} />}
             {isSendModalOpen && <SendToMaintenanceModal onClose={() => setSendModalOpen(false)} onSuccess={handleSuccess} />}
+            {/* --- 3. RENDERIZA O MODAL DE HISTÓRICO QUANDO UM ITEM É SELECIONADO --- */}
+            {selectedHistoryItem && <MaintenanceHistoryModal item={selectedHistoryItem} onClose={() => setSelectedHistoryItem(null)} />}
+
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h4" component="h1">
@@ -70,7 +76,6 @@ function MaintenanceDashboard() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            {/* --- COLUNA DA O.S. ADICIONADA --- */}
                             <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Problema Reportado</TableCell>
@@ -82,7 +87,6 @@ function MaintenanceDashboard() {
                     <TableBody>
                         {(maintenanceItems || []).map((item) => (
                             <TableRow key={item.id} hover>
-                                {/* --- DADO DA O.S. ADICIONADO --- */}
                                 <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.descricao_problema}</TableCell>
@@ -110,7 +114,6 @@ function MaintenanceDashboard() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                             {/* --- COLUNA DA O.S. ADICIONADA --- */}
                             <TableCell sx={{ fontWeight: 'bold' }}>Nº da O.S.</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Equipamento</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>Solução Aplicada</TableCell>
@@ -120,8 +123,13 @@ function MaintenanceDashboard() {
                     </TableHead>
                     <TableBody>
                         {(historyItems || []).map((item) => (
-                            <TableRow key={item.id} hover>
-                                {/* --- DADO DA O.S. ADICIONADO --- */}
+                            // --- 4. LINHA TORNA-SE CLICÁVEL PARA ABRIR O MODAL ---
+                            <TableRow 
+                                key={item.id} 
+                                hover 
+                                onClick={() => setSelectedHistoryItem(item)}
+                                sx={{ cursor: 'pointer' }}
+                            >
                                 <TableCell>{item.os_number}</TableCell>
                                 <TableCell>{item.equipamento?.modelo}</TableCell>
                                 <TableCell>{item.solucao_aplicada || "N/A"}</TableCell>

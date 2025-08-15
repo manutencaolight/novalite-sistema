@@ -32,7 +32,7 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, RegistroPonto
+    Consumivel, ConsumivelEvento, AditivoOperacao, RegistroPonto, HistoricoManutencao
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer,
@@ -172,16 +172,33 @@ class RegistroManutencaoViewSet(viewsets.ModelViewSet):
     serializer_class = RegistroManutencaoSerializer
     permission_classes = [permissions.IsAuthenticated]    
 
-    # --- AJUSTE: MÉTODO DUPLICADO REMOVIDO, FICOU APENAS A VERSÃO COMPLETA ---
     @action(detail=True, methods=['post'])
     def atualizar_status(self, request, pk=None):
         try:
             registro = self.get_object()
+            
+            # Guarda o status antigo para o histórico
+            status_anterior = registro.get_status_display()
+
             novo_status = request.data.get('status')
             solucao = request.data.get('solucao_aplicada', '')
-            if not novo_status: return Response({'error': 'O novo status é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if not novo_status:
+                return Response({'error': 'O novo status é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # --- LÓGICA DE HISTÓRICO ADICIONADA ---
+            HistoricoManutencao.objects.create(
+                registro_manutencao=registro,
+                usuario=request.user,
+                status_anterior=status_anterior,
+                status_novo=dict(RegistroManutencao.STATUS_MANUTENCAO).get(novo_status), # Converte o valor para o texto
+                observacao=solucao or f"Status alterado para {dict(RegistroManutencao.STATUS_MANUTENCAO).get(novo_status)}."
+            )
+
+            # Atualiza o registro principal
             registro.status = novo_status
-            registro.solucao_aplicada = solucao
+            registro.solucao_aplicada = solucao # Salva a observação principal também
+            
             if novo_status == 'REPARADO':
                 equipamento = registro.equipamento
                 if equipamento.quantidade_manutencao > 0:
@@ -189,9 +206,12 @@ class RegistroManutencaoViewSet(viewsets.ModelViewSet):
                     equipamento.quantidade_estoque += 1
                     equipamento.save()
                 registro.data_saida = timezone.now()
+            
             registro.save()
             return Response({'status': 'Status da manutenção atualizado com sucesso!'})
-        except Exception as e: return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class RegistroManutencaoHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     """

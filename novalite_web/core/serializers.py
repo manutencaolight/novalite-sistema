@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, RegistroPonto
+    Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, RegistroPonto, HistoricoManutencao
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -126,13 +126,26 @@ class EventoSerializer(serializers.ModelSerializer):
         return ItemRetornado.objects.filter(material_evento__evento=obj).exclude(condicao='OK').exists()
 
 
-# --- Outros Serializers ---
+# --- Crie este novo serializer ---
+class HistoricoManutencaoSerializer(serializers.ModelSerializer):
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
+    class Meta:
+        model = HistoricoManutencao
+        fields = ['id', 'data_atualizacao', 'status_anterior', 'status_novo', 'observacao', 'usuario_nome']
+
+
 class RegistroManutencaoSerializer(serializers.ModelSerializer):
     equipamento = EquipamentoSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    # --- CAMPO ADICIONADO PARA INCLUIR O HISTÓRICO ---
+    historico_detalhado = HistoricoManutencaoSerializer(many=True, read_only=True)
+
     class Meta:
         model = RegistroManutencao
-        fields = '__all__'
+        # --- ATUALIZE OS FIELDS PARA INCLUIR O NOVO CAMPO ---
+        fields = ['id', 'os_number', 'equipamento', 'status', 'status_display',
+                  'descricao_problema', 'solucao_aplicada', 'data_entrada',
+                  'data_saida', 'historico_detalhado']
 
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:

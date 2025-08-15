@@ -1,9 +1,9 @@
-# Em: core/models.py (Versão Final Corrigida)
+# Em: core/models.py (Versão Corrigida e Final)
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db.models import Sum
-from django.utils import timezone # Garanta que esta importação exista
+from django.utils import timezone
 
 class Cliente(models.Model):
     empresa = models.CharField(max_length=255, verbose_name="Empresa")
@@ -91,7 +91,6 @@ class Usuario(AbstractUser):
         default='planejamento', 
         verbose_name="Nível de Acesso"
     )
-    # --- CORREÇÃO: ADICIONADO PARA EVITAR CONFLITO COM O USER PADRÃO ---
     groups = models.ManyToManyField(
         Group,
         verbose_name='groups',
@@ -157,7 +156,7 @@ class Evento(models.Model):
         return self.nome or f"{self.get_tipo_evento_display()} para {self.cliente.empresa}"
     
 class FotoPreEvento(models.Model):
-    evento = models.ForeignKey(Evento, related_name='fotos', on_delete=models.CASCADE)
+    evento = models.ForeignKey('Evento', related_name='fotos', on_delete=models.CASCADE)
     imagem = models.ImageField(upload_to='fotos_pre_evento/')
     descricao = models.CharField(max_length=255, blank=True)
     class Meta:
@@ -165,8 +164,8 @@ class FotoPreEvento(models.Model):
         verbose_name_plural = "Fotos do Pré-Evento"
 
 class MaterialEvento(models.Model):
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
-    equipamento = models.ForeignKey(Equipamento, on_delete=models.CASCADE, null=True, blank=True)
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE)
+    equipamento = models.ForeignKey('Equipamento', on_delete=models.CASCADE, null=True, blank=True)
     item_descricao = models.CharField(max_length=255, blank=True, null=True, verbose_name="Item de Consumo/Descrição")
     quantidade = models.IntegerField(verbose_name="Qtd. Planejada")
     quantidade_separada = models.IntegerField(default=0, verbose_name="Qtd. com Saída")
@@ -192,8 +191,8 @@ class MaterialEvento(models.Model):
         return f"{self.quantidade}x {nome_item} para {self.evento.nome}"
 
 class ConsumivelEvento(models.Model):
-    evento = models.ForeignKey(Evento, related_name='consumiveis_set', on_delete=models.CASCADE)
-    consumivel = models.ForeignKey(Consumivel, on_delete=models.CASCADE)
+    evento = models.ForeignKey('Evento', related_name='consumiveis_set', on_delete=models.CASCADE)
+    consumivel = models.ForeignKey('Consumivel', on_delete=models.CASCADE)
     quantidade = models.IntegerField(verbose_name="Quantidade Planeada")
     conferido = models.BooleanField(default=False)
     class Meta:
@@ -205,7 +204,7 @@ class ConsumivelEvento(models.Model):
 
 class ItemRetornado(models.Model):
     CONDICAO_CHOICES = (('OK', 'Bom Estado'), ('DEFEITO', 'Com Defeito'), ('QUEBRADO', 'Quebrado'), ('PERDIDO', 'Perdido/Sumiu'))
-    material_evento = models.ForeignKey(MaterialEvento, related_name='itens_retornados', on_delete=models.CASCADE)
+    material_evento = models.ForeignKey('MaterialEvento', related_name='itens_retornados', on_delete=models.CASCADE)
     quantidade = models.PositiveIntegerField()
     condicao = models.CharField(max_length=20, choices=CONDICAO_CHOICES, default='OK')
     observacao = models.TextField(blank=True, null=True, verbose_name="Observação (ex: lente trincada, cabo partido)")
@@ -214,20 +213,50 @@ class ItemRetornado(models.Model):
         return f"{self.quantidade}x {self.material_evento.equipamento.modelo} retornado(s) como {self.get_condicao_display()}"
 
 class RegistroManutencao(models.Model):
+    os_number = models.CharField(
+        max_length=20, 
+        unique=True, 
+        blank=True, 
+        null=True, 
+        verbose_name="Número da O.S."
+    )
     STATUS_MANUTENCAO = (('AGUARDANDO_AVALIACAO', 'Aguardando Avaliação'), ('EM_REPARO', 'Em Reparo'), ('AGUARDANDO_PECAS', 'Aguardando Peças'), ('REPARADO', 'Reparado / Pronto para Estoque'))
-    equipamento = models.ForeignKey(Equipamento, related_name='historico_manutencao', on_delete=models.CASCADE)
-    item_retornado = models.OneToOneField(ItemRetornado, on_delete=models.SET_NULL, null=True, blank=True)
+    equipamento = models.ForeignKey('Equipamento', related_name='historico_manutencao', on_delete=models.CASCADE)
+    item_retornado = models.OneToOneField('ItemRetornado', on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=30, choices=STATUS_MANUTENCAO, default='AGUARDANDO_AVALIACAO')
     descricao_problema = models.TextField()
     solucao_aplicada = models.TextField(blank=True, null=True)
     data_entrada = models.DateTimeField(auto_now_add=True)
     data_saida = models.DateTimeField(null=True, blank=True)
-    def __str__(self):
-        return f"Manutenção para {self.equipamento.modelo} - {self.get_status_display()}"
 
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+        if is_new and not self.os_number:
+            self.os_number = f"OS-{self.data_entrada.year}-{self.pk:05d}"
+            self.save(update_fields=['os_number'])
+
+    def __str__(self):
+        return f"{self.os_number or 'O.S. Pendente'} - Manutenção para {self.equipamento.modelo}"
+    
+class HistoricoManutencao(models.Model):
+    registro_manutencao = models.ForeignKey('RegistroManutencao', on_delete=models.CASCADE, related_name="historico_detalhado")
+    usuario = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Realizado por")
+    data_atualizacao = models.DateTimeField(auto_now_add=True, verbose_name="Data")
+    status_anterior = models.CharField(max_length=50, blank=True, null=True, verbose_name="Status Anterior")
+    status_novo = models.CharField(max_length=50, blank=True, null=True, verbose_name="Status Novo")
+    observacao = models.TextField(verbose_name="Observação")
+
+    class Meta:
+        verbose_name = "Histórico de Manutenção"
+        verbose_name_plural = "Históricos de Manutenção"
+        ordering = ['-data_atualizacao']
+
+    def __str__(self):
+        return f"Atualização em {self.data_atualizacao.strftime('%d/%m/%Y %H:%M')} por {self.usuario.username if self.usuario else 'Sistema'}"
 
 class AditivoOperacao(models.Model):
-    operacao_original = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="aditivos")
+    operacao_original = models.ForeignKey('Evento', on_delete=models.CASCADE, related_name="aditivos")
     criado_por = models.ForeignKey('Usuario', on_delete=models.SET_NULL, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     descricao = models.TextField(verbose_name="Descrição do Aditivo")
@@ -241,57 +270,20 @@ class AditivoOperacao(models.Model):
         return f"Aditivo para {self.operacao_original.nome} em {self.data_criacao.strftime('%d/%m/%Y')}"
 
 class MaterialAditivo(models.Model):
-    aditivo = models.ForeignKey(AditivoOperacao, on_delete=models.CASCADE, related_name="materiais_aditivo")
-    equipamento = models.ForeignKey(Equipamento, on_delete=models.CASCADE)
+    aditivo = models.ForeignKey('AditivoOperacao', on_delete=models.CASCADE, related_name="materiais_aditivo")
+    equipamento = models.ForeignKey('Equipamento', on_delete=models.CASCADE)
     quantidade = models.IntegerField()
 
     def __str__(self):
         return f"{self.quantidade}x {self.equipamento.modelo}"    
 
-class RegistroManutencao(models.Model):
-    # --- CAMPO ADICIONADO ---
-    os_number = models.CharField(
-        max_length=20, 
-        unique=True, 
-        blank=True, 
-        null=True, 
-        verbose_name="Número da O.S."
-    )
-
-    STATUS_MANUTENCAO = (('AGUARDANDO_AVALIACAO', 'Aguardando Avaliação'), ('EM_REPARO', 'Em Reparo'), ('AGUARDANDO_PECAS', 'Aguardando Peças'), ('REPARADO', 'Reparado / Pronto para Estoque'))
-    equipamento = models.ForeignKey(Equipamento, related_name='historico_manutencao', on_delete=models.CASCADE)
-    item_retornado = models.OneToOneField(ItemRetornado, on_delete=models.SET_NULL, null=True, blank=True)
-    status = models.CharField(max_length=30, choices=STATUS_MANUTENCAO, default='AGUARDANDO_AVALIACAO')
-    descricao_problema = models.TextField()
-    solucao_aplicada = models.TextField(blank=True, null=True)
-    data_entrada = models.DateTimeField(auto_now_add=True)
-    data_saida = models.DateTimeField(null=True, blank=True)
-    
-    # --- LÓGICA ADICIONADA ---
-    def save(self, *args, **kwargs):
-        # Verifica se é um objeto novo (ainda sem ID no banco)
-        is_new = self._state.adding
-        # Salva o objeto primeiro para que ele ganhe um ID (pk)
-        super().save(*args, **kwargs)
-        # Se for um objeto novo e o número da O.S. ainda não foi definido...
-        if is_new and not self.os_number:
-            # Gera o número da O.S. usando o ano e o ID do registo
-            self.os_number = f"OS-{self.data_entrada.year}-{self.pk:05d}"
-            # Salva o objeto novamente, apenas atualizando este campo
-            self.save(update_fields=['os_number'])
-
-    def __str__(self):
-        # --- ATUALIZADO PARA MOSTRAR A O.S. ---
-        return f"{self.os_number} - Manutenção para {self.equipamento.modelo}"
-
-# --- NOVO MODELO ADICIONADO NO FINAL DO ARQUIVO ---
 class RegistroPonto(models.Model):
     STATUS_CHOICES = (
         ('PRESENTE', 'Presente'),
         ('FINALIZADO', 'Finalizado'),
     )
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, related_name="registros_ponto")
-    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name="registros_ponto")
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE, related_name="registros_ponto")
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE, related_name="registros_ponto")
     data_hora_entrada = models.DateTimeField(auto_now_add=True, verbose_name="Entrada")
     data_hora_saida = models.DateTimeField(null=True, blank=True, verbose_name="Saída")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PRESENTE')
@@ -312,4 +304,4 @@ class RegistroPonto(models.Model):
             hours, remainder = divmod(total_seconds, 3600)
             minutes, _ = divmod(remainder, 60)
             return f"{hours:02d}:{minutes:02d}"
-        return "Em andamento"    
+        return "Em andamento"
