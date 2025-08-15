@@ -25,6 +25,7 @@ urlpatterns = [
     *router.urls,
 
     # Rotas Manuais
+    path('debug-urls/', views.list_all_urls, name='debug-urls'),
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('dashboard-stats/', views.dashboard_stats, name='dashboard_stats'),

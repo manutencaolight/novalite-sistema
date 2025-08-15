@@ -1163,7 +1163,7 @@ class MeusEventosView(APIView):
             return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)
 
 @api_view(['GET'])
-@permission_classes([AllowAny]) # Aberto para qualquer um, para facilitar o teste
+@permission_classes([AllowAny]) # Sem autenticação para facilitar o teste
 def list_all_urls(request):
     """
     Uma view de debug que lista todas as rotas registradas no projeto.
@@ -1171,7 +1171,6 @@ def list_all_urls(request):
     url_patterns = get_resolver().url_patterns
     url_list = []
     for pattern in url_patterns:
-        # Para rotas incluídas (como o router da API), exploramos seus padrões
         if hasattr(pattern, 'url_patterns'):
             for sub_pattern in pattern.url_patterns:
                 url_list.append(str(sub_pattern.pattern))
