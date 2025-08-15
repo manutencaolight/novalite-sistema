@@ -1212,6 +1212,19 @@ class MeusEventosView(APIView):
         except Funcionario.DoesNotExist:
             return Response({'error': 'Registro de funcionário não encontrado.'}, status=404)
 
+class LiderEventosView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            lider = Funcionario.objects.get(email=request.user.email)
+            eventos_liderados = Evento.objects.filter(chefe_de_equipe=lider).order_by('-data_evento')
+            serializer = EventoSerializer(eventos_liderados, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Funcionario.DoesNotExist:
+            return Response({'error': 'Você não está cadastrado como funcionário.'}, status=404)
+        
+
 @api_view(['GET'])
 @permission_classes([AllowAny]) # Sem autenticação para facilitar o teste
 def list_all_urls(request):
