@@ -1,4 +1,4 @@
-// Em: src/EventDetail.js (Versão com a Equipe de volta)
+// Em: src/EventDetail.js (Versão com a sintaxe corrigida)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -20,7 +20,8 @@ import { useAuth } from './AuthContext';
 import { authFetch } from './api';
 import AddConsumableForm from './AddConsumableForm';
 import AditivoModal from './AditivoModal';
-import TeamManagement from './TeamManagement'; // --- 1. IMPORTE O NOVO COMPONENTE ---
+// Removida a importação de TeamManagement pois a funcionalidade foi movida
+// import TeamManagement from './TeamManagement'; 
 
 function EventDetail() {
     const [evento, setEvento] = useState(null);
@@ -85,7 +86,7 @@ function EventDetail() {
     const isOwner = user && evento.criado_por && user.user_id === evento.criado_por.id;
     const isAdmin = user && user.role === 'admin';
     const podeEditar = (isOwner || isAdmin) && isPlanning;
-    const canBeCancelled = ['PLANEJAMENTO', 'AGUARDANDO_CONFERENCIA', 'AGUARDANDO_SAIDA'].includes(evento.status);
+    const canBeCancelled = ['PLANEJAMENTO', 'AGUA-RDANDO_CONFERENCIA', 'AGUARDANDO_SAIDA'].includes(evento.status);
     const podeCriarAditivo = (isOwner || isAdmin) && ['AGUARDANDO_CONFERENCIA', 'AGUARDANDO_SAIDA', 'EM_ANDAMENTO'].includes(evento.status);
 
     return (
@@ -195,8 +196,8 @@ function EventDetail() {
                         {podeEditar && <AddConsumableForm eventoId={id} onConsumableAdded={fetchData} existingConsumables={evento.consumiveis_set || []} />}
                     </Paper>
                 </Grid>
-
-                
+            </Grid> {/* --- TAG DE FECHAMENTO ADICIONADA AQUI --- */}
+            
             <Paper sx={{ p: 3, mt: 8 }}>
                 <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
