@@ -196,15 +196,7 @@ function EventDetail() {
                     </Paper>
                 </Grid>
 
-                {/* --- 2. ADICIONE O COMPONENTE DE EQUIPE AQUI --- */}
-                {/* Ele só será renderizado se a condição 'podeEditar' for verdadeira */}
-                {podeEditar && (
-                    <Grid item xs={12}>
-                        <TeamManagement evento={evento} onTeamUpdate={fetchData} />
-                    </Grid>
-                )}
-            </Grid>
-            
+                
             <Paper sx={{ p: 3, mt: 8 }}>
                 <Typography variant="h6" gutterBottom>Ações da Operação</Typography>
                 <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
