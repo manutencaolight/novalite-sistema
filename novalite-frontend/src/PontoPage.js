@@ -20,18 +20,15 @@ function PontoPage() {
         if (user) {
             setLoading(true);
             authFetch('/ponto/meus-dados/')
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(err => Promise.reject(err.error || 'Falha ao buscar seus eventos.'));
-                    }
-                    return res.json();
-                })
+                .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err.error || 'Falha ao buscar seus eventos.')))
                 .then(data => {
                     setMeusEventos(data.eventos || []);
-                    // Armazena o ID do funcionário logado para facilitar as verificações
-                    if (data.eventos.length > 0 && data.eventos[0].equipe.length > 0) {
-                        const self = data.eventos[0].equipe.find(f => f.email === user.email);
-                        if (self) setFuncionarioId(self.id);
+                    // Tenta encontrar o funcionário logado a partir do primeiro evento
+                    if (data.eventos && data.eventos.length > 0 && data.eventos[0].escala_equipe) {
+                        const selfInScale = data.eventos[0].escala_equipe.find(e => e.funcionario.email === user.email);
+                        if (selfInScale) {
+                            setFuncionarioId(selfInScale.funcionario.id);
+                        }
                     }
                 })
                 .catch(err => setError(err.message || err))
@@ -39,9 +36,7 @@ function PontoPage() {
         }
     }, [user]);
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleMemberConfirm = (eventoId) => {
         setError('');
@@ -50,7 +45,7 @@ function PontoPage() {
             .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
             .then(data => {
                 setSuccess(data.status);
-                fetchData(); // Atualiza a lista para refletir a confirmação
+                fetchData();
             })
             .catch(err => setError(err.error || 'Ocorreu um erro ao confirmar a presença.'));
     };
@@ -108,7 +103,7 @@ function PontoPage() {
                         );
                     }) : (
                         <Typography sx={{ p: 2, textAlign: 'center' }}>
-                            Você não foi designado para nenhum evento no momento.
+                            Você não foi escalado para nenhum evento no momento.
                         </Typography>
                     )}
                 </List>

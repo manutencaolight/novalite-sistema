@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (Versão com sintaxe corrigida)
+// Em: src/TeamManagementPage.js (Versão com a correção do 'TypeError')
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
 import { authFetch } from './api';
 import { useAuth } from './AuthContext';
+import ScheduleModal from './ScheduleModal';
 
 function TeamManagementPage() {
     const { user } = useAuth();
@@ -19,9 +20,8 @@ function TeamManagementPage() {
     const [selectedEvento, setSelectedEvento] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-    const [currentTeam, setCurrentTeam] = useState([]);
-    const [funcionarioParaAdicionar, setFuncionarioParaAdicionar] = useState('');
+
+    const [modalState, setModalState] = useState({ open: false, funcionario: null, escala: null });
 
     const fetchData = useCallback(() => {
         if (user) {
@@ -42,44 +42,43 @@ function TeamManagementPage() {
     useEffect(() => { fetchData(); }, [fetchData]);
     
     const handleSelectEvento = (eventoId) => {
-        const eventoCompleto = eventos.find(e => e.id === eventoId);
-        setSelectedEvento(eventoCompleto);
-        setCurrentTeam(eventoCompleto ? eventoCompleto.equipe : []);
+        authFetch(`/eventos/${eventoId}/`)
+            .then(res => res.json())
+            .then(data => setSelectedEvento(data));
+    };
+
+    const handleOpenModal = (funcionario, escala = null) => {
+        setModalState({ open: true, funcionario, escala });
     };
     
-    const handleAddMember = () => {
-        if (!funcionarioParaAdicionar) return;
-        const funcionarioObj = allFuncionarios.find(f => f.id === funcionarioParaAdicionar);
-        if (funcionarioObj && !currentTeam.some(m => m.id === funcionarioObj.id)) {
-            setCurrentTeam([...currentTeam, funcionarioObj]);
+    const handleCloseModal = () => {
+        setModalState({ open: false, funcionario: null, escala: null });
+    };
+
+    const handleSaveSchedule = (scheduleData) => {
+        const { funcionario, escala } = modalState;
+        const url = escala ? `/escalas/${escala.id}/` : '/escalas/';
+        const method = escala ? 'PUT' : 'POST';
+        const body = {
+            ...scheduleData,
+            evento: selectedEvento.id,
+            funcionario: funcionario.id
+        };
+
+        authFetch(url, { method, body: JSON.stringify(body) })
+            .then(res => res.ok ? res.json() : Promise.reject('Falha ao salvar escala.'))
+            .then(() => {
+                handleCloseModal();
+                handleSelectEvento(selectedEvento.id);
+            })
+            .catch(err => setError(err.message || err));
+    };
+    
+    const handleRemoveMember = (escalaId) => {
+        if (window.confirm('Remover este membro da escala?')) {
+            authFetch(`/escalas/${escalaId}/`, { method: 'DELETE' })
+                .then(() => handleSelectEvento(selectedEvento.id));
         }
-        setFuncionarioParaAdicionar('');
-    };
-
-    const handleRemoveMember = (funcionarioId) => {
-        setCurrentTeam(currentTeam.filter(m => m.id !== funcionarioId));
-    };
-
-    const handleSaveTeam = () => {
-        setError('');
-        setSuccess('');
-        if (!selectedEvento) return;
-
-        const funcionario_ids = currentTeam.map(m => m.id);
-        
-        authFetch(`/eventos/${selectedEvento.id}/manage-team/`, {
-            method: 'POST',
-            body: JSON.stringify({ funcionario_ids }),
-        })
-        .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
-        .then((data) => {
-            setSuccess(data.status || 'Equipe salva com sucesso!');
-            authFetch(`/eventos/${selectedEvento.id}/`).then(res => res.json()).then(updatedEvento => {
-                setSelectedEvento(updatedEvento);
-                setEventos(prevEventos => prevEventos.map(e => e.id === updatedEvento.id ? updatedEvento : e));
-            });
-        })
-        .catch(err => setError(err.error || 'Ocorreu um erro ao salvar a equipe.'));
     };
 
     const handleSetLeader = (funcionarioId) => {
@@ -88,13 +87,7 @@ function TeamManagementPage() {
             body: JSON.stringify({ funcionario_id: funcionarioId }),
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
-        .then(() => {
-            authFetch(`/eventos/${selectedEvento.id}/`).then(res => res.json()).then(updatedEvento => {
-                setSelectedEvento(updatedEvento);
-                setCurrentTeam(updatedEvento.equipe);
-                setEventos(prevEventos => prevEventos.map(e => e.id === updatedEvento.id ? updatedEvento : e));
-            });
-        })
+        .then(() => handleSelectEvento(selectedEvento.id))
         .catch(err => setError(err.error || 'Erro ao definir líder.'));
     };
 
@@ -102,17 +95,19 @@ function TeamManagementPage() {
         return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     }
 
-    const funcionariosDisponiveis = selectedEvento
-        ? allFuncionarios.filter(func => !currentTeam.some(membro => membro.id === func.id))
-        : [];
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Acessa selectedEvento.escala_equipe em vez do antigo selectedEvento.equipe
+    const funcionariosNaEscalaIds = selectedEvento?.escala_equipe?.map(e => e.funcionario.id) || [];
+    const funcionariosDisponiveis = allFuncionarios.filter(
+        func => !funcionariosNaEscalaIds.includes(func.id)
+    );
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Typography variant="h4" component="h1" gutterBottom>
-                Gestão de Equipes por Evento
+                Gestão de Escala por Evento
             </Typography>
-            {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             <Grid container spacing={3}>
                 <Grid item xs={12} md={5}>
@@ -136,74 +131,71 @@ function TeamManagementPage() {
                 </Grid>
 
                 <Grid item xs={12} md={7}>
-                    <Paper sx={{ p: 2, height: '70vh', display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{ p: 2, height: '70vh', overflow: 'auto' }}>
                         {selectedEvento ? (
                             <>
-                                <Box flexGrow={1} overflow="auto">
-                                    <Typography variant="h6">Editando Equipe de: {selectedEvento.nome}</Typography>
-                                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', my: 2 }}>
-                                        <FormControl fullWidth>
-                                            <InputLabel>Adicionar Membro</InputLabel>
-                                            <Select
-                                                value={funcionarioParaAdicionar}
-                                                label="Adicionar Membro"
-                                                onChange={e => setFuncionarioParaAdicionar(e.target.value)}
-                                            >
-                                                <MenuItem value=""><em>Selecione...</em></MenuItem>
-                                                {funcionariosDisponiveis.map(func => (
-                                                    <MenuItem key={func.id} value={func.id}>{func.nome}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleAddMember}
-                                            disabled={!funcionarioParaAdicionar}
+                                <Typography variant="h6">Escala de: {selectedEvento.nome}</Typography>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', my: 2 }}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Adicionar e Agendar</InputLabel>
+                                        <Select
+                                            value={''}
+                                            label="Adicionar e Agendar"
+                                            onChange={e => {
+                                                const func = allFuncionarios.find(f => f.id === e.target.value);
+                                                if (func) handleOpenModal(func);
+                                            }}
                                         >
-                                            <AddCircleIcon />
-                                        </Button>
-                                    </Box>
-                                    <Divider />
-                                    <List>
-                                        {currentTeam.map(membro => (
-                                            <ListItem
-                                                key={membro.id}
-                                                secondaryAction={
-                                                    <Box>
-                                                        <Tooltip title="Definir como Chefe de Equipe">
-                                                            <IconButton edge="end" onClick={() => handleSetLeader(membro.id)}>
-                                                                <StarIcon color={selectedEvento.chefe_de_equipe?.id === membro.id ? "warning" : "inherit"} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Remover da Equipe">
-                                                            <IconButton edge="end" onClick={() => handleRemoveMember(membro.id)}>
-                                                                <DeleteIcon color="error" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                }
-                                            >
-                                                <ListItemText primary={membro.nome} secondary={membro.funcao} />
-                                            </ListItem>
-                                        ))}
-                                    </List>
+                                            <MenuItem value=""><em>Selecione um membro...</em></MenuItem>
+                                            {funcionariosDisponiveis.map(func => (
+                                                <MenuItem key={func.id} value={func.id}>{func.nome}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </Box>
-                                <Divider sx={{ my: 1 }} />
-                                <Box sx={{ pt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                                    {/* A CORREÇÃO ESTÁ AQUI. A SINTAXE DEVE SER SIMPLES, SEM CARACTERES EXTRAS. */}
-                                    <Button variant="contained" onClick={handleSaveTeam}>
-                                        Salvar Alterações na Equipe
-                                    </Button>
-                                </Box>
+                                <Divider />
+                                <List>
+                                    {/* --- CORREÇÃO APLICADA AQUI --- */}
+                                    {(selectedEvento.escala_equipe || []).map(escala => (
+                                        <ListItem key={escala.id} secondaryAction={
+                                            <>
+                                                <Tooltip title="Definir como Chefe de Equipe">
+                                                    <IconButton onClick={() => handleSetLeader(escala.funcionario.id)}>
+                                                        <StarIcon color={selectedEvento.chefe_de_equipe?.id === escala.funcionario.id ? "warning" : "inherit"} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Editar Agenda">
+                                                    <IconButton onClick={() => handleOpenModal(escala.funcionario, escala)}><EditIcon /></IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Remover da Escala">
+                                                    <IconButton onClick={() => handleRemoveMember(escala.id)}><DeleteIcon color="error" /></IconButton>
+                                                </Tooltip>
+                                            </>
+                                        }>
+                                            <ListItemText 
+                                                primary={escala.funcionario.nome}
+                                                secondary={`De ${escala.data_inicio} ${escala.hora_inicio} até ${escala.data_fim} ${escala.hora_fim}`}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
                             </>
                         ) : (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                                <Typography color="text.secondary">Selecione um evento à esquerda para gerenciar a equipe.</Typography>
+                                <Typography color="text.secondary">Selecione um evento à esquerda para gerenciar a escala.</Typography>
                             </Box>
                         )}
                     </Paper>
                 </Grid>
             </Grid>
+            <ScheduleModal 
+                open={modalState.open}
+                onClose={handleCloseModal}
+                onSave={handleSaveSchedule}
+                funcionario={modalState.funcionario}
+                evento={selectedEvento}
+                escala={modalState.escala}
+            />
         </Container>
     );
 }
