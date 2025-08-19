@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (Versão com a correção do 'TypeError')
+// Em: src/TeamManagementPage.js (Versão com importação corrigida)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -9,6 +9,7 @@ import {
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
+import EditIcon from '@mui/icons-material/Edit'; // --- IMPORTAÇÃO ADICIONADA AQUI ---
 import { authFetch } from './api';
 import { useAuth } from './AuthContext';
 import ScheduleModal from './ScheduleModal';
@@ -18,6 +19,7 @@ function TeamManagementPage() {
     const [eventos, setEventos] = useState([]);
     const [allFuncionarios, setAllFuncionarios] = useState([]);
     const [selectedEvento, setSelectedEvento] = useState(null);
+    const [escalaAtual, setEscalaAtual] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -42,9 +44,13 @@ function TeamManagementPage() {
     useEffect(() => { fetchData(); }, [fetchData]);
     
     const handleSelectEvento = (eventoId) => {
-        authFetch(`/eventos/${eventoId}/`)
-            .then(res => res.json())
-            .then(data => setSelectedEvento(data));
+        const evento = eventos.find(e => e.id === eventoId);
+        setSelectedEvento(evento);
+        if (evento) {
+            authFetch(`/escalas/?evento_id=${eventoId}`)
+                .then(res => res.json())
+                .then(data => setEscalaAtual(data.results || data));
+        }
     };
 
     const handleOpenModal = (funcionario, escala = null) => {
@@ -94,9 +100,7 @@ function TeamManagementPage() {
     if (loading) {
         return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
     }
-
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Acessa selectedEvento.escala_equipe em vez do antigo selectedEvento.equipe
+    
     const funcionariosNaEscalaIds = selectedEvento?.escala_equipe?.map(e => e.funcionario.id) || [];
     const funcionariosDisponiveis = allFuncionarios.filter(
         func => !funcionariosNaEscalaIds.includes(func.id)
@@ -155,7 +159,6 @@ function TeamManagementPage() {
                                 </Box>
                                 <Divider />
                                 <List>
-                                    {/* --- CORREÇÃO APLICADA AQUI --- */}
                                     {(selectedEvento.escala_equipe || []).map(escala => (
                                         <ListItem key={escala.id} secondaryAction={
                                             <>
