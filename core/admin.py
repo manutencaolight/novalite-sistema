@@ -8,7 +8,7 @@ from import_export.admin import ImportExportModelAdmin
 from django.contrib.auth.admin import UserAdmin
 
 from .models import (
-    Cliente, Equipamento, Funcionario, Veiculo, Evento,EventoResource,
+    Cliente, Equipamento, Funcionario, Veiculo, Evento,
     MaterialEvento, FotoPreEvento, Usuario, ItemRetornado, Consumivel, ConsumivelEvento,
     RegistroManutencao, ConfirmacaoPresenca, HistoricoManutencao,
     EscalaFuncionario
