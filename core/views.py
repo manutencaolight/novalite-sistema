@@ -39,7 +39,7 @@ from .serializers import (
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
     UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer,
-    MyTokenObtainPairSerialize, EscalaFuncionarioSerializer # Removido o serializer do RegistroPonto
+    MyTokenObtainPairSerializer, EscalaFuncionarioSerializer # Removido o serializer do RegistroPonto
 )
 
 class ClienteViewSet(viewsets.ModelViewSet):
