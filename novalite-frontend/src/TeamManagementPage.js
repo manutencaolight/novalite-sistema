@@ -69,8 +69,7 @@ function TeamManagementPage() {
         const body = {
             ...scheduleData,
             evento: selectedEvento.id,
-            funcionario_id: funcionario.id // VERIFIQUE SE ESTÁ ASSIM
-
+            funcionario_id: funcionario.id 
         };
 
         authFetch(url, { method, body: JSON.stringify(body) })
