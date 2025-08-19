@@ -1,4 +1,4 @@
-# Em: core/admin.py (Versão Final Consolidada e Corrigida)
+# Em: core/admin.py (Versão com correção no EventoResource)
 
 from django.contrib import admin
 from django.urls import reverse
@@ -13,7 +13,6 @@ from .models import (
     RegistroManutencao, ConfirmacaoPresenca, HistoricoManutencao,
     EscalaFuncionario
 )
-
 
 # --- Seção 1: Resources para Importação/Exportação ---
 
