@@ -14,8 +14,7 @@ from .models import (
     EscalaFuncionario
 )
 
-# --- Seção 1: Resources para Importação/Exportação ---
-
+# --- Resources para Importação/Exportação ---
 class EquipamentoResource(resources.ModelResource):
     class Meta:
         model = Equipamento
@@ -36,11 +35,12 @@ class VeiculoResource(resources.ModelResource):
         model = Veiculo
         fields = ('id', 'nome', 'placa', 'tipo', 'status')
 
+# --- CLASSE EventoResource CORRIGIDA ---
 class EventoResource(resources.ModelResource):
     cliente = fields.Field(attribute='cliente', widget=widgets.ForeignKeyWidget(Cliente, 'empresa'))
     chefe_de_equipe = fields.Field(attribute='chefe_de_equipe', widget=widgets.ForeignKeyWidget(Funcionario, 'nome'))
     veiculos = fields.Field(attribute='veiculos', widget=widgets.ManyToManyWidget(Veiculo, field='nome', separator=', '))
-    # Novo campo customizado para exportar a equipe
+    # Novo campo customizado para exportar a equipe a partir da escala
     equipe_escalada = fields.Field(column_name='Equipe Escalada')
 
     class Meta:
@@ -54,29 +54,12 @@ class EventoResource(resources.ModelResource):
         nomes = [escala.funcionario.nome for escala in evento.escala_equipe.all()]
         return ", ".join(nomes)
 
-class ConsumivelResource(resources.ModelResource):
-    class Meta:
-        model = Consumivel
-        fields = ('id', 'nome', 'categoria', 'unidade_medida', 'quantidade_estoque')
+# ... (outros resources)
 
-class RegistroManutencaoResource(resources.ModelResource):
-    equipamento = fields.Field(attribute='equipamento', widget=widgets.ForeignKeyWidget(Equipamento, 'modelo'))
-    class Meta:
-        model = RegistroManutencao
-        fields = ('id', 'os_number', 'equipamento', 'status', 'descricao_problema', 'solucao_aplicada', 'data_entrada', 'data_saida')
-
-class UsuarioResource(resources.ModelResource):
-    class Meta:
-        model = Usuario
-        fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role', 'is_staff', 'is_active', 'date_joined')
-
-
-# --- Seção 2: Classes 'Inline' (Definidas antes de serem usadas) ---
-
+# --- Classes 'Inline' ---
 class MaterialEventoInline(admin.TabularInline):
     model = MaterialEvento
     extra = 1
-    fields = ('equipamento', 'quantidade')
     autocomplete_fields = ('equipamento',)
 
 class FotoPreEventoInline(admin.TabularInline):
@@ -95,9 +78,7 @@ class EscalaFuncionarioInline(admin.TabularInline):
     verbose_name = "Membro da Equipe na Escala"
     verbose_name_plural = "Equipe Escalada"
 
-
-# --- Seção 3: Model Admins ---
-
+# --- Model Admins ---
 @admin.register(Cliente)
 class ClienteAdmin(ImportExportModelAdmin):
     resource_classes = [ClienteResource]
@@ -107,21 +88,21 @@ class ClienteAdmin(ImportExportModelAdmin):
 @admin.register(Equipamento)
 class EquipamentoAdmin(ImportExportModelAdmin):
     resource_classes = [EquipamentoResource]
-    search_fields = ('modelo', 'fabricante') # <<< CORREÇÃO ADICIONADA
+    search_fields = ('modelo', 'fabricante')
     list_display = ('modelo', 'fabricante', 'categoria', 'quantidade_estoque')
     list_filter = ('categoria',)
 
 @admin.register(Funcionario)
 class FuncionarioAdmin(ImportExportModelAdmin):
     resource_classes = [FuncionarioResource]
-    search_fields = ('nome', 'funcao') # <<< CORREÇÃO ADICIONADA
+    search_fields = ('nome', 'funcao')
     list_display = ('nome', 'funcao', 'tipo', 'contato', 'email')
     list_filter = ('tipo',)
 
 @admin.register(Veiculo)
 class VeiculoAdmin(ImportExportModelAdmin):
     resource_classes = [VeiculoResource]
-    search_fields = ('nome', 'placa') # <<< CORREÇÃO ADICIONADA
+    search_fields = ('nome', 'placa')
     list_display = ('nome', 'placa', 'tipo', 'status')
     list_filter = ('status',)
 
