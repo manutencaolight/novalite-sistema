@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (Versão com importação corrigida)
+// Em: src/TeamManagementPage.js (Versão com a correção do Bad Request)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -6,10 +6,9 @@ import {
     ListItemText, Divider, CircularProgress, Alert, FormControl,
     InputLabel, Select, MenuItem, Button, ListItem, IconButton, Tooltip
 } from '@mui/material';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
+import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import StarIcon from '@mui/icons-material/Star';
-import EditIcon from '@mui/icons-material/Edit'; // --- IMPORTAÇÃO ADICIONADA AQUI ---
 import { authFetch } from './api';
 import { useAuth } from './AuthContext';
 import ScheduleModal from './ScheduleModal';
@@ -22,7 +21,6 @@ function TeamManagementPage() {
     const [escalaAtual, setEscalaAtual] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-
     const [modalState, setModalState] = useState({ open: false, funcionario: null, escala: null });
 
     const fetchData = useCallback(() => {
@@ -65,10 +63,13 @@ function TeamManagementPage() {
         const { funcionario, escala } = modalState;
         const url = escala ? `/escalas/${escala.id}/` : '/escalas/';
         const method = escala ? 'PUT' : 'POST';
+        
+        // --- CORREÇÃO APLICADA AQUI ---
+        // O nome do campo foi alterado de 'funcionario' para 'funcionario_id'
         const body = {
             ...scheduleData,
             evento: selectedEvento.id,
-            funcionario: funcionario.id
+            funcionario_id: funcionario.id 
         };
 
         authFetch(url, { method, body: JSON.stringify(body) })
