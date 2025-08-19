@@ -1,11 +1,11 @@
-# Em: core/serializers.py (Versão Final e Corrigida)
+# Em: core/serializers.py (Versão com a correção no EventoSerializer)
 
 from rest_framework import serializers
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
     Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, 
-    ConfirmacaoPresenca, HistoricoManutencao, EscalaFuncionario # --- MODELOS ATUALIZADOS ---
+    ConfirmacaoPresenca, HistoricoManutencao, EscalaFuncionario
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -97,14 +97,12 @@ class UsuarioSimpleSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ['id', 'username']
 
-# --- NOVO SERIALIZER PARA O HISTÓRICO DETALHADO ---
 class HistoricoManutencaoSerializer(serializers.ModelSerializer):
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True, default='Sistema')
     class Meta:
         model = HistoricoManutencao
         fields = ['id', 'data_atualizacao', 'status_anterior', 'status_novo', 'observacao', 'usuario_nome']
 
-# --- NOVO SERIALIZER PARA A CONFIRMAÇÃO DE PRESENÇA ---
 class ConfirmacaoPresencaSerializer(serializers.ModelSerializer):
     funcionario_nome = serializers.CharField(source='funcionario.nome', read_only=True)
     presenca_confirmada = serializers.BooleanField(read_only=True)
@@ -115,17 +113,16 @@ class ConfirmacaoPresencaSerializer(serializers.ModelSerializer):
                   'data_confirmacao_lider', 'data_confirmacao_membro', 'presenca_confirmada']
 
 class EscalaFuncionarioSerializer(serializers.ModelSerializer):
-    # Inclui os dados completos do funcionário, não apenas o ID
     funcionario = FuncionarioSerializer(read_only=True)
-    
     class Meta:
         model = EscalaFuncionario
         fields = ['id', 'evento', 'funcionario', 'data_inicio', 'hora_inicio', 'data_fim', 'hora_fim']
 
-
+# --- CLASSE EventoSerializer CORRIGIDA ---
 class EventoSerializer(serializers.ModelSerializer):
     cliente = ClienteSerializer(read_only=True)
-    equipe = FuncionarioSerializer(many=True, read_only=True)
+    # A linha 'equipe' foi removida. Usamos 'escala_equipe' agora.
+    escala_equipe = EscalaFuncionarioSerializer(many=True, read_only=True)
     veiculos = VeiculoSerializer(many=True, read_only=True)
     materialevento_set = MaterialEventoSerializer(many=True, read_only=True)
     consumiveis_set = ConsumivelEventoSerializer(many=True, read_only=True)
@@ -199,5 +196,3 @@ class AditivoOperacaoSerializer(serializers.ModelSerializer):
         for material_data in materiais_data:
             MaterialAditivo.objects.create(aditivo=aditivo, **material_data)
         return aditivo
-
-# --- REMOVIDO O 'RegistroPontoSerializer' ---
