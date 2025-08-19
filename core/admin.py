@@ -37,11 +37,12 @@ class VeiculoResource(resources.ModelResource):
         model = Veiculo
         fields = ('id', 'nome', 'placa', 'tipo', 'status')
 
+# --- CLASSE EventoResource CORRIGIDA ---
 class EventoResource(resources.ModelResource):
     cliente = fields.Field(attribute='cliente', widget=widgets.ForeignKeyWidget(Cliente, 'empresa'))
     chefe_de_equipe = fields.Field(attribute='chefe_de_equipe', widget=widgets.ForeignKeyWidget(Funcionario, 'nome'))
     veiculos = fields.Field(attribute='veiculos', widget=widgets.ManyToManyWidget(Veiculo, field='nome', separator=', '))
-    # Novo campo customizado para exportar a equipe
+    # Novo campo customizado para exportar a equipe a partir da escala
     equipe_escalada = fields.Field(column_name='Equipe Escalada')
 
     class Meta:
@@ -54,7 +55,6 @@ class EventoResource(resources.ModelResource):
     def dehydrate_equipe_escalada(self, evento):
         nomes = [escala.funcionario.nome for escala in evento.escala_equipe.all()]
         return ", ".join(nomes)
-
 class ConsumivelResource(resources.ModelResource):
     class Meta:
         model = Consumivel
