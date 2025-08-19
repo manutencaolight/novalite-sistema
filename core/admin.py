@@ -33,6 +33,7 @@ class FuncionarioResource(resources.ModelResource):
 
 class VeiculoResource(resources.ModelResource):
     class Meta:
+        
         model = Veiculo
         fields = ('id', 'nome', 'placa', 'tipo', 'status')
 
