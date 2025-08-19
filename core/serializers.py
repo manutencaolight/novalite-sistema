@@ -112,11 +112,20 @@ class ConfirmacaoPresencaSerializer(serializers.ModelSerializer):
                   'confirmado_pelo_lider', 'confirmado_pelo_membro', 
                   'data_confirmacao_lider', 'data_confirmacao_membro', 'presenca_confirmada']
 
+# --- SERIALIZER CORRIGIDO ---
 class EscalaFuncionarioSerializer(serializers.ModelSerializer):
+    # Campo para MOSTRAR os detalhes do funcionário (em GET)
     funcionario = FuncionarioSerializer(read_only=True)
+    
+    # Campo para RECEBER o ID do funcionário ao CRIAR/EDITAR (em POST/PUT)
+    funcionario_id = serializers.PrimaryKeyRelatedField(
+        queryset=Funcionario.objects.all(), source='funcionario', write_only=True
+    )
+    
     class Meta:
         model = EscalaFuncionario
-        fields = ['id', 'evento', 'funcionario', 'data_inicio', 'hora_inicio', 'data_fim', 'hora_fim']
+        # Adicionamos 'funcionario_id' à lista de campos
+        fields = ['id', 'evento', 'funcionario', 'funcionario_id', 'data_inicio', 'hora_inicio', 'data_fim', 'hora_fim']
 
 # --- CLASSE EventoSerializer CORRIGIDA ---
 class EventoSerializer(serializers.ModelSerializer):
