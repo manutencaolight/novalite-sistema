@@ -138,7 +138,6 @@ class Evento(models.Model):
     necessita_gerador = models.BooleanField(default=False, verbose_name="Necessita de Gerador?")
     observacoes_tecnicas = models.TextField(blank=True, null=True, verbose_name="Observações Técnicas Adicionais")
     motivo_cancelamento = models.TextField(blank=True, null=True, verbose_name="Motivo do Cancelamento")
-    equipe = models.ManyToManyField('Funcionario', blank=True, related_name="eventos")
     veiculos = models.ManyToManyField('Veiculo', blank=True, related_name="eventos")
     chefe_de_equipe = models.ForeignKey(
         'Funcionario',
@@ -304,3 +303,19 @@ class ConfirmacaoPresenca(models.Model):
     @property
     def presenca_confirmada(self):
         return self.confirmado_pelo_lider and self.confirmado_pelo_membro
+
+class EscalaFuncionario(models.Model):
+    evento = models.ForeignKey('Evento', on_delete=models.CASCADE, related_name="escala_equipe")
+    funcionario = models.ForeignKey('Funcionario', on_delete=models.CASCADE, related_name="escalas")
+    data_inicio = models.DateField(verbose_name="Data de Início")
+    hora_inicio = models.TimeField(verbose_name="Hora de Início")
+    data_fim = models.DateField(verbose_name="Data de Fim")
+    hora_fim = models.TimeField(verbose_name="Hora de Fim")
+
+    class Meta:
+        verbose_name = "Escala de Funcionário"
+        verbose_name_plural = "Escalas de Funcionários"
+        unique_together = ('evento', 'funcionario') # Garante que um funcionário só possa ser escalado uma vez por evento
+
+    def __str__(self):
+        return f"{self.funcionario.nome} escalado para {self.evento.nome}"    

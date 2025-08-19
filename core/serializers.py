@@ -5,7 +5,7 @@ from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo, 
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
     Consumivel, ConsumivelEvento, AditivoOperacao, MaterialAditivo, 
-    ConfirmacaoPresenca, HistoricoManutencao # --- MODELOS ATUALIZADOS ---
+    ConfirmacaoPresenca, HistoricoManutencao, EscalaFuncionario # --- MODELOS ATUALIZADOS ---
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -114,6 +114,15 @@ class ConfirmacaoPresencaSerializer(serializers.ModelSerializer):
                   'confirmado_pelo_lider', 'confirmado_pelo_membro', 
                   'data_confirmacao_lider', 'data_confirmacao_membro', 'presenca_confirmada']
 
+class EscalaFuncionarioSerializer(serializers.ModelSerializer):
+    # Inclui os dados completos do funcionário, não apenas o ID
+    funcionario = FuncionarioSerializer(read_only=True)
+    
+    class Meta:
+        model = EscalaFuncionario
+        fields = ['id', 'evento', 'funcionario', 'data_inicio', 'hora_inicio', 'data_fim', 'hora_fim']
+
+
 class EventoSerializer(serializers.ModelSerializer):
     cliente = ClienteSerializer(read_only=True)
     equipe = FuncionarioSerializer(many=True, read_only=True)
@@ -135,7 +144,7 @@ class EventoSerializer(serializers.ModelSerializer):
             'id', 'status', 'status_display', 'tipo_evento', 'nome', 'local', 
             'cliente', 'cliente_id', 'responsavel_local_nome', 'responsavel_local_contato', 
             'data_montagem', 'data_evento', 'data_termino', 'modificado_em', 
-            'observacao_correcao', 'motivo_cancelamento', 'equipe', 'veiculos', 
+            'observacao_correcao', 'motivo_cancelamento', 'escala_equipe', 'veiculos', 
             'chefe_de_equipe', 'confirmacoes_presenca',
             'materialevento_set', 'consumiveis_set', 'criado_por', 'tem_avarias'
         ]

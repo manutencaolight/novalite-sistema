@@ -32,14 +32,14 @@ from reportlab.lib.units import inch
 from .models import (
     Cliente, Equipamento, Evento, Funcionario, Veiculo,
     MaterialEvento, FotoPreEvento, ItemRetornado, RegistroManutencao, Usuario,
-    Consumivel, ConsumivelEvento, AditivoOperacao, ConfirmacaoPresenca, HistoricoManutencao
+    Consumivel, ConsumivelEvento, AditivoOperacao, ConfirmacaoPresenca, HistoricoManutencao, EscalaFuncionario,
 )
 from .serializers import (
     ClienteSerializer, EquipamentoSerializer, EventoSerializer,
     FuncionarioSerializer, VeiculoSerializer, MaterialEventoSerializer,
     FotoPreEventoSerializer, ItemRetornadoComEventoSerializer, RegistroManutencaoSerializer,
     UsuarioSerializer, ConsumivelSerializer, ConsumivelEventoSerializer, AditivoOperacaoSerializer,
-    MyTokenObtainPairSerializer # Removido o serializer do RegistroPonto
+    MyTokenObtainPairSerialize, EscalaFuncionarioSerializer # Removido o serializer do RegistroPonto
 )
 
 class ClienteViewSet(viewsets.ModelViewSet):
@@ -263,6 +263,23 @@ class FotoPreEventoViewSet(viewsets.ModelViewSet):
     queryset = FotoPreEvento.objects.all()
     serializer_class = FotoPreEventoSerializer
 
+class EscalaFuncionarioViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para criar, ver, editar e deletar escalas de funcionários em eventos.
+    """
+    queryset = EscalaFuncionario.objects.all()
+    serializer_class = EscalaFuncionarioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Filtra as escalas por evento, se um 'evento_id' for passado na URL
+        queryset = super().get_queryset()
+        evento_id = self.request.query_params.get('evento_id')
+        if evento_id:
+            queryset = queryset.filter(evento_id=evento_id)
+        return queryset
+
+
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.all().order_by('-data_evento')
     serializer_class = EventoSerializer
@@ -420,50 +437,6 @@ class EventoViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Saída de material registrada com sucesso!', 'novo_status': evento.get_status_display()})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-            
-    # Ação original (pode ser mantida para compatibilidade ou removida)
-    @action(detail=True, methods=['post'], url_path='manage-team')
-    def manage_team(self, request, pk=None):
-        evento = self.get_object()
-        funcionario_ids = request.data.get('funcionario_ids')
-        if funcionario_ids is None:
-            return Response({'error': 'A chave "funcionario_ids" é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            funcionarios = Funcionario.objects.filter(id__in=funcionario_ids)
-            evento.equipe.set(funcionarios)
-            return Response({'status': 'Equipe atualizada com sucesso!'})
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-    # --- NOVA AÇÃO PARA ADICIONAR UM MEMBRO ---
-    @action(detail=True, methods=['post'], url_path='add-member')
-    def add_member_to_team(self, request, pk=None):
-        evento = self.get_object()
-        funcionario_id = request.data.get('funcionario_id')
-        if not funcionario_id:
-            return Response({'error': 'ID do funcionário é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            funcionario = Funcionario.objects.get(id=funcionario_id)
-            evento.equipe.add(funcionario)
-            return Response({'status': f'{funcionario.nome} foi adicionado à equipe.'})
-        except Funcionario.DoesNotExist:
-            return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
-
-    # --- NOVA AÇÃO PARA REMOVER UM MEMBRO ---
-    @action(detail=True, methods=['post'], url_path='remove-member')
-    def remove_member_from_team(self, request, pk=None):
-        evento = self.get_object()
-        funcionario_id = request.data.get('funcionario_id')
-        if not funcionario_id:
-            return Response({'error': 'ID do funcionário é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            funcionario = Funcionario.objects.get(id=funcionario_id)
-            evento.equipe.remove(funcionario)
-            return Response({'status': f'{funcionario.nome} foi removido da equipe.'})
-        except Funcionario.DoesNotExist:
-            return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
-
 
 
     # --- LÓGICA DE RETORNO CORRIGIDA E COMPLETA ---
@@ -1241,4 +1214,5 @@ def list_all_urls(request):
             url_list.append(str(pattern.pattern))
     
     return Response({"registered_urls": url_list})        
+
 

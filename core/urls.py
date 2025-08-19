@@ -18,6 +18,7 @@ router.register(r'manutencao', views.RegistroManutencaoViewSet, basename='manute
 router.register(r'manutencao-historico', views.RegistroManutencaoHistoryViewSet, basename='manutencao-historico')
 router.register(r'consumiveis', views.ConsumivelViewSet)
 router.register(r'consumiveis-evento', views.ConsumivelEventoViewSet)
+router.register(r'escalas', views.EscalaFuncionarioViewSet)
 
 urlpatterns = [
     *router.urls,

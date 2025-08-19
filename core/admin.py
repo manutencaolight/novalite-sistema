@@ -1,4 +1,4 @@
-# Em: core/admin.py (Versão corrigida para usar ConfirmacaoPresenca)
+# Em: core/admin.py (Versão Final Consolidada e Corrigida)
 
 from django.contrib import admin
 from django.urls import reverse
@@ -10,11 +10,13 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Cliente, Equipamento, Funcionario, Veiculo, Evento,
     MaterialEvento, FotoPreEvento, Usuario, ItemRetornado, Consumivel, ConsumivelEvento,
-    RegistroManutencao,
-    ConfirmacaoPresenca # --- 1. IMPORTAÇÃO CORRIGIDA ---
+    RegistroManutencao, ConfirmacaoPresenca, HistoricoManutencao,
+    EscalaFuncionario
 )
 
-# --- Resources para Importação/Exportação ---
+
+# --- Seção 1: Resources para Importação/Exportação ---
+
 class EquipamentoResource(resources.ModelResource):
     class Meta:
         model = Equipamento
@@ -37,11 +39,11 @@ class VeiculoResource(resources.ModelResource):
 
 class EventoResource(resources.ModelResource):
     cliente = fields.Field(attribute='cliente', widget=widgets.ForeignKeyWidget(Cliente, 'empresa'))
-    equipe = fields.Field(attribute='equipe', widget=widgets.ManyToManyWidget(Funcionario, field='nome', separator=', '))
+    chefe_de_equipe = fields.Field(attribute='chefe_de_equipe', widget=widgets.ForeignKeyWidget(Funcionario, 'nome'))
     veiculos = fields.Field(attribute='veiculos', widget=widgets.ManyToManyWidget(Veiculo, field='nome', separator=', '))
     class Meta:
         model = Evento
-        fields = ('id', 'nome', 'status', 'tipo_evento', 'local', 'cliente', 'data_evento', 'data_termino', 'equipe', 'veiculos', 'criado_por__username')
+        fields = ('id', 'nome', 'status', 'tipo_evento', 'local', 'cliente', 'data_evento', 'data_termino', 'chefe_de_equipe', 'veiculos', 'criado_por__username')
 
 class ConsumivelResource(resources.ModelResource):
     class Meta:
@@ -59,7 +61,9 @@ class UsuarioResource(resources.ModelResource):
         model = Usuario
         fields = ('id', 'username', 'first_name', 'last_name', 'email', 'role', 'is_staff', 'is_active', 'date_joined')
 
-# --- Classes 'Inline' ---
+
+# --- Seção 2: Classes 'Inline' (Definidas antes de serem usadas) ---
+
 class MaterialEventoInline(admin.TabularInline):
     model = MaterialEvento
     extra = 1
@@ -75,7 +79,16 @@ class ConsumivelEventoInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ('consumivel',)
 
-# --- Model Admins ---
+class EscalaFuncionarioInline(admin.TabularInline):
+    model = EscalaFuncionario
+    extra = 1
+    autocomplete_fields = ('funcionario',)
+    verbose_name = "Membro da Equipe na Escala"
+    verbose_name_plural = "Equipe Escalada"
+
+
+# --- Seção 3: Model Admins ---
+
 @admin.register(Cliente)
 class ClienteAdmin(ImportExportModelAdmin):
     resource_classes = [ClienteResource]
@@ -85,21 +98,21 @@ class ClienteAdmin(ImportExportModelAdmin):
 @admin.register(Equipamento)
 class EquipamentoAdmin(ImportExportModelAdmin):
     resource_classes = [EquipamentoResource]
-    search_fields = ('modelo', 'fabricante')
+    search_fields = ('modelo', 'fabricante') # <<< CORREÇÃO ADICIONADA
     list_display = ('modelo', 'fabricante', 'categoria', 'quantidade_estoque')
     list_filter = ('categoria',)
 
 @admin.register(Funcionario)
 class FuncionarioAdmin(ImportExportModelAdmin):
     resource_classes = [FuncionarioResource]
-    search_fields = ('nome', 'funcao')
+    search_fields = ('nome', 'funcao') # <<< CORREÇÃO ADICIONADA
     list_display = ('nome', 'funcao', 'tipo', 'contato', 'email')
     list_filter = ('tipo',)
 
 @admin.register(Veiculo)
 class VeiculoAdmin(ImportExportModelAdmin):
     resource_classes = [VeiculoResource]
-    search_fields = ('nome', 'placa')
+    search_fields = ('nome', 'placa') # <<< CORREÇÃO ADICIONADA
     list_display = ('nome', 'placa', 'tipo', 'status')
     list_filter = ('status',)
 
@@ -110,13 +123,13 @@ class EventoAdmin(ImportExportModelAdmin):
         ('Status e Tipo da Operação', {'fields': ('status', 'tipo_evento')}),
         ('Informações Principais', {'fields': ('nome', 'local', 'cliente', 'responsavel_local_nome', 'responsavel_local_contato')}),
         ('Datas', {'fields': ('data_montagem', 'data_evento', 'data_termino')}),
-        ('Recursos Designados', {'fields': ('equipe', 'veiculos', 'chefe_de_equipe')}),
+        ('Recursos Designados', {'fields': ('veiculos', 'chefe_de_equipe')}),
     )
-    inlines = [MaterialEventoInline, FotoPreEventoInline, ConsumivelEventoInline]
+    inlines = [EscalaFuncionarioInline, MaterialEventoInline, FotoPreEventoInline, ConsumivelEventoInline]
     list_display = ('nome', 'tipo_evento', 'cliente', 'data_evento', 'status', 'acao_do_evento')
     list_filter = ('status', 'tipo_evento', 'data_evento')
     search_fields = ('nome', 'cliente__empresa', 'local')
-    autocomplete_fields = ('cliente', 'equipe', 'veiculos', 'chefe_de_equipe')
+    autocomplete_fields = ('cliente', 'veiculos', 'chefe_de_equipe')
 
     def acao_do_evento(self, obj):
         url = reverse('evento_report_pdf', args=[obj.pk])
@@ -134,19 +147,18 @@ class UsuarioAdmin(ImportExportModelAdmin, UserAdmin):
 @admin.register(Consumivel)
 class ConsumivelAdmin(ImportExportModelAdmin):
     resource_classes = [ConsumivelResource]
+    search_fields = ('nome',) # <<< CORREÇÃO ADICIONADA
     list_display = ('nome', 'categoria', 'quantidade_estoque', 'unidade_medida')
-    search_fields = ('nome',)
     list_filter = ('categoria',)
 
 @admin.register(RegistroManutencao)
 class RegistroManutencaoAdmin(ImportExportModelAdmin):
-    resource_classes = [RegistroManutencaoResource]
+    # resource_classes = [RegistroManutencaoResource] # (Descomente se precisar de exportação)
     list_display = ('os_number', 'equipamento', 'status', 'data_entrada', 'data_saida')
     list_filter = ('status', 'data_entrada')
     search_fields = ('os_number', 'equipamento__modelo', 'descricao_problema')
     readonly_fields = ('os_number', 'data_entrada', 'data_saida')
 
-# --- ADMIN ATUALIZADO DE 'RegistroPonto' PARA 'ConfirmacaoPresenca' ---
 @admin.register(ConfirmacaoPresenca)
 class ConfirmacaoPresencaAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'confirmado_pelo_lider', 'confirmado_pelo_membro', 'presenca_confirmada')
