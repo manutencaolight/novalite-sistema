@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (Versão com tratamento de resposta robusto)
+// Em: src/TeamManagementPage.js (Versão com atualização de estado corrigida)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -18,9 +18,9 @@ function TeamManagementPage() {
     const [eventos, setEventos] = useState([]);
     const [allFuncionarios, setAllFuncionarios] = useState([]);
     const [selectedEvento, setSelectedEvento] = useState(null);
-    const [escalaAtual, setEscalaAtual] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
     const [modalState, setModalState] = useState({ open: false, funcionario: null, escala: null });
 
     const fetchData = useCallback(() => {
@@ -40,15 +40,25 @@ function TeamManagementPage() {
     }, [user]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    // --- FUNÇÃO DE ATUALIZAÇÃO CORRIGIDA E CENTRALIZADA ---
+    const refreshSelectedEvent = (eventoId) => {
+        // Busca a versão mais recente e completa do evento
+        authFetch(`/eventos/${eventoId}/`)
+            .then(res => res.json())
+            .then(updatedEvento => {
+                // Atualiza o estado do evento selecionado (para a coluna da direita)
+                setSelectedEvento(updatedEvento);
+                // Atualiza a lista principal de eventos (para a coluna da esquerda)
+                setEventos(prevEventos => 
+                    prevEventos.map(e => e.id === eventoId ? updatedEvento : e)
+                );
+            });
+    };
     
     const handleSelectEvento = (eventoId) => {
-        const evento = eventos.find(e => e.id === eventoId);
-        setSelectedEvento(evento);
-        if (evento) {
-            authFetch(`/escalas/?evento_id=${eventoId}`)
-                .then(res => res.json())
-                .then(data => setEscalaAtual(data.results || data));
-        }
+        // Ao selecionar, também busca os dados mais recentes
+        refreshSelectedEvent(eventoId);
     };
 
     const handleOpenModal = (funcionario, escala = null) => {
@@ -69,43 +79,20 @@ function TeamManagementPage() {
             funcionario_id: funcionario.id 
         };
 
-        // --- LÓGICA DE TRATAMENTO DE RESPOSTA CORRIGIDA ---
         authFetch(url, { method, body: JSON.stringify(body) })
-            .then(res => {
-                if (res.ok) {
-                    // Se a resposta for 204 No Content, não há corpo para ler
-                    if (res.status === 204) return null;
-                    return res.json();
-                }
-                // Tenta extrair uma mensagem de erro do backend
-                return res.json().then(errData => Promise.reject(errData));
-            })
+            .then(res => res.ok ? res.json() : Promise.reject('Falha ao salvar escala.'))
             .then(() => {
                 handleCloseModal();
-                handleSelectEvento(selectedEvento.id);
+                refreshSelectedEvent(selectedEvento.id); // << USA A FUNÇÃO CORRETA
             })
-            .catch(err => {
-                const errorMessage = typeof err === 'object' ? JSON.stringify(err) : 'Falha ao salvar a escala.';
-                setError(errorMessage);
-            });
+            .catch(err => setError(err.message || err));
     };
     
     const handleRemoveMember = (escalaId) => {
         if (window.confirm('Remover este membro da escala?')) {
             authFetch(`/escalas/${escalaId}/`, { method: 'DELETE' })
-                .then(res => {
-                    if (!res.ok) {
-                        return res.json().then(errData => Promise.reject(errData));
-                    }
-                    // Ações de DELETE bem-sucedidas geralmente retornam 204 No Content
-                    return null;
-                })
                 .then(() => {
-                    handleSelectEvento(selectedEvento.id);
-                })
-                .catch(err => {
-                    const errorMessage = typeof err === 'object' ? JSON.stringify(err) : 'Falha ao remover membro.';
-                    setError(errorMessage);
+                    refreshSelectedEvent(selectedEvento.id); // << USA A FUNÇÃO CORRETA
                 });
         }
     };
@@ -116,7 +103,7 @@ function TeamManagementPage() {
             body: JSON.stringify({ funcionario_id: funcionarioId }),
         })
         .then(res => res.ok ? res.json() : res.json().then(err => Promise.reject(err)))
-        .then(() => handleSelectEvento(selectedEvento.id))
+        .then(() => refreshSelectedEvent(selectedEvento.id)) // << USA A FUNÇÃO CORRETA
         .catch(err => setError(err.error || 'Erro ao definir líder.'));
     };
 
