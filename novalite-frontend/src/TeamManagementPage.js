@@ -1,4 +1,4 @@
-// Em: src/TeamManagementPage.js (Versão com a correção do Bad Request)
+// Em: src/TeamManagementPage.js (Versão com tratamento de resposta robusto)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -63,28 +63,50 @@ function TeamManagementPage() {
         const { funcionario, escala } = modalState;
         const url = escala ? `/escalas/${escala.id}/` : '/escalas/';
         const method = escala ? 'PUT' : 'POST';
-        
-        // --- CORREÇÃO APLICADA AQUI ---
-        // O nome do campo foi alterado de 'funcionario' para 'funcionario_id'
         const body = {
             ...scheduleData,
             evento: selectedEvento.id,
             funcionario_id: funcionario.id 
         };
 
+        // --- LÓGICA DE TRATAMENTO DE RESPOSTA CORRIGIDA ---
         authFetch(url, { method, body: JSON.stringify(body) })
-            .then(res => res.ok ? res.json() : Promise.reject('Falha ao salvar escala.'))
+            .then(res => {
+                if (res.ok) {
+                    // Se a resposta for 204 No Content, não há corpo para ler
+                    if (res.status === 204) return null;
+                    return res.json();
+                }
+                // Tenta extrair uma mensagem de erro do backend
+                return res.json().then(errData => Promise.reject(errData));
+            })
             .then(() => {
                 handleCloseModal();
                 handleSelectEvento(selectedEvento.id);
             })
-            .catch(err => setError(err.message || err));
+            .catch(err => {
+                const errorMessage = typeof err === 'object' ? JSON.stringify(err) : 'Falha ao salvar a escala.';
+                setError(errorMessage);
+            });
     };
     
     const handleRemoveMember = (escalaId) => {
         if (window.confirm('Remover este membro da escala?')) {
             authFetch(`/escalas/${escalaId}/`, { method: 'DELETE' })
-                .then(() => handleSelectEvento(selectedEvento.id));
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => Promise.reject(errData));
+                    }
+                    // Ações de DELETE bem-sucedidas geralmente retornam 204 No Content
+                    return null;
+                })
+                .then(() => {
+                    handleSelectEvento(selectedEvento.id);
+                })
+                .catch(err => {
+                    const errorMessage = typeof err === 'object' ? JSON.stringify(err) : 'Falha ao remover membro.';
+                    setError(errorMessage);
+                });
         }
     };
 
